@@ -15,15 +15,16 @@
             width: 100%;
             max-width: 750px;
             aspect-ratio: 3 / 2;
-            background-size: cover; /* Default */
-            background-position: center;
+            background-size: 100% 100%;
+            background-position: center center;
             background-repeat: no-repeat;
             position: relative;
+            background-color: #0f172a; /* Warna cadangan jika gambar memiliki ruang kosong */
         }
         .draggable-box {
             position: absolute;
             user-select: none;
-            touch-action: none; /* Lancar digeser pakai sentuhan jari di HP */
+            touch-action: none;
             resize: both;
             overflow: hidden;
             min-width: 150px;
@@ -235,15 +236,26 @@
                 <div class="bg-slate-900 p-4 rounded-2xl shadow-xl border border-slate-800 no-print space-y-3">
                     <h3 class="text-xs md:text-sm font-bold text-amber-400 border-b border-slate-800 pb-2">🎛️ Kontrol Tampilan & Latar</h3>
                     
-                    <!-- Pengaturan Ukuran Gambar Latar -->
-                    <div class="space-y-1">
-                        <label class="block text-xs font-medium text-slate-300">🖼️ Ukuran Gambar Latar (Background)</label>
-                        <select id="bgSizeSelect" onchange="changeBgSize(this.value)" class="w-full bg-slate-950 border border-slate-700 text-white rounded px-2 py-1.5 text-xs">
-                            <option value="cover">Cover (Memenuhi Kartu / Penuh)</option>
-                            <option value="contain">Contain (Pas di Kartu / Utuh Tanpa Potong)</option>
-                            <option value="100% 100%">Stretch (Peregangan Menyesuaikan Kartu)</option>
-                            <option value="auto">Auto (Ukuran Asli Gambar)</option>
-                        </select>
+                    <!-- Pengaturan Penyesuaian Latar Belakang Tingkat Lanjut -->
+                    <div class="space-y-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                        <label class="block text-xs font-bold text-amber-300">🖼️ Pengaturan Gambar Latar</label>
+                        
+                        <div>
+                            <span class="text-[10px] text-slate-400 block mb-1">Mode Tampilan:</span>
+                            <select id="bgSizeMode" onchange="updateBackgroundStyle()" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-2 py-1 text-xs">
+                                <option value="100% 100%">Pas Penuh (Stretch/Pas Kartu)</option>
+                                <option value="contain">Utuh Tanpa Terpotong (Contain)</option>
+                                <option value="cover">Penuh / Zoom (Cover)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-[10px] text-slate-400 mb-1">
+                                <span>Skala Zoom Latar:</span>
+                                <span id="bgZoomVal" class="font-mono text-amber-400">100%</span>
+                            </div>
+                            <input type="range" id="bgZoomRange" min="50" max="200" value="100" step="5" oninput="updateBackgroundStyle()" class="w-full accent-amber-500 cursor-pointer">
+                        </div>
                     </div>
 
                     <hr class="border-slate-800">
@@ -501,14 +513,24 @@
             saveCurrentState();
         }
 
-        function changeBgSize(sizeVal) {
+        function updateBackgroundStyle() {
             const card = document.getElementById('printable-card');
-            card.style.backgroundSize = sizeVal;
+            const mode = document.getElementById('bgSizeMode').value;
+            const zoom = document.getElementById('bgZoomRange').value;
+            
+            document.getElementById('bgZoomVal').innerText = zoom + '%';
+
+            if (mode === 'contain' || mode === 'cover') {
+                card.style.backgroundSize = `${zoom}%`;
+            } else {
+                // Mode stretch menyesuaikan dimensi kartu
+                card.style.backgroundSize = `${zoom}% ${zoom}%`;
+            }
             saveCurrentState();
         }
 
         function resetLayoutSettings() {
-            if (confirm("Reset posisi kotak, transparansi, dan latar belakang?")) {
+            if (confirm("Reset posisi kotak dan pengaturan latar belakang?")) {
                 localStorage.removeItem('qslCardActiveState');
                 location.reload();
             }
@@ -543,10 +565,13 @@
             if (savedState.bgImage) {
                 document.getElementById('printable-card').style.backgroundImage = `url('${savedState.bgImage}')`;
             }
-            if (savedState.bgSize) {
-                document.getElementById('printable-card').style.backgroundSize = savedState.bgSize;
-                document.getElementById('bgSizeSelect').value = savedState.bgSize;
+            if (savedState.bgSizeMode) {
+                document.getElementById('bgSizeMode').value = savedState.bgSizeMode;
             }
+            if (savedState.bgZoom) {
+                document.getElementById('bgZoomRange').value = savedState.bgZoom;
+            }
+            updateBackgroundStyle();
 
             updateDateTime();
             updateEventText();
@@ -606,7 +631,8 @@
                 displayName: document.getElementById('displayName').innerText,
                 displayAddress: document.getElementById('displayAddress').innerText,
                 bgImage: bgImageSrc,
-                bgSize: document.getElementById('bgSizeSelect').value,
+                bgSizeMode: document.getElementById('bgSizeMode').value,
+                bgZoom: document.getElementById('bgZoomRange').value,
                 layout: layout
             };
             localStorage.setItem('qslCardActiveState', JSON.stringify(state));
@@ -733,7 +759,7 @@
         }
 
         function downloadCardImage() {
-            html2canvas(document.getElementById('printable-card'), { scale: 3, useCORS: true, backgroundColor: "#1e293b" }).then(canvas => {
+            html2canvas(document.getElementById('printable-card'), { scale: 3, useCORS: true, backgroundColor: "#0f172a" }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `QSL_Card_${document.getElementById('displayCallsign').innerText}.png`;
                 link.href = canvas.toDataURL('image/png');
