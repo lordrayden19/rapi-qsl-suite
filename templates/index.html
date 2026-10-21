@@ -2,9 +2,9 @@
 <html lang="id">
 <head>
     <link rel="manifest" href="/static/manifest.json">
-<meta name="theme-color" content="#f59e0b">
-	<meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f59e0b">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>QSL Card Generator Pro - RAPI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -22,23 +22,24 @@
         .draggable-box {
             position: absolute;
             user-select: none;
+            touch-action: none; /* Sangat penting agar lancar digeser pakai sentuhan jari di HP */
             resize: both;
             overflow: hidden;
-            min-width: 180px;
-            min-height: 80px;
+            min-width: 150px;
+            min-height: 70px;
             border: 2px dashed rgba(245, 158, 11, 0.4);
             background-color: rgba(30, 41, 59, 0.90);
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
             border-radius: 0.75rem;
-            padding: 1rem 1.25rem 1.25rem 1rem;
+            padding: 0.75rem 1rem 1rem 0.75rem;
             box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.4);
         }
         .draggable-box::-webkit-resizer {
             background-color: #f59e0b;
             border-radius: 4px;
-            width: 18px;
-            height: 18px;
+            width: 20px;
+            height: 20px;
         }
         @media print {
             body * { visibility: hidden; }
@@ -49,36 +50,36 @@
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-start p-2 md:p-4">
 
-    <div class="w-full max-w-6xl mx-auto space-y-6">
+    <div class="w-full max-w-6xl mx-auto space-y-4 md:space-y-6">
         
-        <!-- Navigasi Tab Menu (Generator & About) -->
-        <div class="flex justify-between items-center bg-slate-900 px-6 py-3 rounded-2xl shadow-xl border border-slate-800 no-print">
+        <!-- Navigasi Tab Menu -->
+        <div class="flex justify-between items-center bg-slate-900 px-4 py-3 rounded-2xl shadow-xl border border-slate-800 no-print">
             <div class="flex items-center gap-2">
-                <span class="text-2xl">??</span>
-                <h1 class="font-bold text-amber-400 text-lg">RAPI QSL Card Suite</h1>
+                <span class="text-xl">??</span>
+                <h1 class="font-bold text-amber-400 text-sm md:text-lg">RAPI QSL Suite</h1>
             </div>
             <div class="flex gap-2">
-                <button onclick="switchTab('generator')" id="tabGenerator" class="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition shadow">
-                    ?? Generator QSL
+                <button onclick="switchTab('generator')" id="tabGenerator" class="bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow">
+                    Generator
                 </button>
-                <button onclick="switchTab('about')" id="tabAbout" class="bg-slate-800 text-slate-300 hover:bg-slate-700 px-4 py-1.5 rounded-lg text-xs font-semibold transition shadow">
-                    ?? About Developer
+                <button onclick="switchTab('about')" id="tabAbout" class="bg-slate-800 text-slate-300 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow">
+                    About
                 </button>
             </div>
         </div>
 
         <!-- KONTEN TAB 1: GENERATOR QSL -->
-        <div id="contentGenerator" class="space-y-6">
+        <div id="contentGenerator" class="space-y-4 md:space-y-6">
             
             <!-- Panel Kontrol Utama Atas -->
-            <div class="bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800 no-print">
-                <h2 class="text-xl font-bold text-amber-400 mb-4 flex items-center gap-2">
+            <div class="bg-slate-900 p-4 md:p-6 rounded-2xl shadow-xl border border-slate-800 no-print">
+                <h2 class="text-base md:text-xl font-bold text-amber-400 mb-3 flex items-center gap-2">
                     ?? Pengaturan Data QSL Card RAPI
                 </h2>
 
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">Callsign Lawan</label>
                         <input type="text" id="targetCallsign" placeholder="JZ10IXM" value="JZ10IXM" oninput="saveCurrentState()"
@@ -99,112 +100,112 @@
                         <input type="text" id="ncsInput" placeholder="JZ10IXM" value="JZ10IXM" oninput="saveCurrentState()"
                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                     </div>
-                    <div>
+                    <div class="sm:col-span-2 md:col-span-1">
                         <label class="block text-xs font-medium text-slate-300 mb-1">Nama Event</label>
                         <input type="text" id="eventInput" placeholder="Special Call" value="Rutin / Net Lokal" oninput="updateEventText(); saveCurrentState();"
                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                     </div>
                 </div>
 
-                <!-- Input Waktu & Tanggal dengan Pilihan Zona Waktu (WIB, WITA, WIT) -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800 items-center">
+                <!-- Input Waktu & Zona Waktu -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800 items-center">
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">Tanggal QSO</label>
-                        <input type="date" id="dateInput" onchange="userEditedTime = true; updateDateTime(); saveCurrentState();" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1 text-white text-sm">
+                        <input type="date" id="dateInput" onchange="userEditedTime = true; updateDateTime(); saveCurrentState();" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-white text-sm">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Waktu QSO & Pilihan Zona Waktu Live</label>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Waktu QSO & Zona Waktu</label>
                         <div class="flex flex-wrap items-center gap-2">
-                            <input type="text" id="timeInput" oninput="userEditedTime = true; updateDateTime(); saveCurrentState();" class="w-36 bg-slate-900 border border-slate-700 rounded px-3 py-1 text-white text-sm font-mono">
+                            <input type="text" id="timeInput" oninput="userEditedTime = true; updateDateTime(); saveCurrentState();" class="w-32 bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-white text-sm font-mono">
                             <div class="flex gap-1">
-                                <button onclick="setZone('WIB')" id="btnWIB" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-2.5 py-1 rounded transition font-bold shadow">WIB</button>
-                                <button onclick="setZone('WITA')" id="btnWITA" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-1 rounded transition font-bold shadow">WITA</button>
-                                <button onclick="setZone('WIT')" id="btnWIT" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-1 rounded transition font-bold shadow">WIT</button>
+                                <button onclick="setZone('WIB')" id="btnWIB" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-2.5 py-1.5 rounded transition font-bold shadow">WIB</button>
+                                <button onclick="setZone('WITA')" id="btnWITA" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-1.5 rounded transition font-bold shadow">WITA</button>
+                                <button onclick="setZone('WIT')" id="btnWIT" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-1.5 rounded transition font-bold shadow">WIT</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Tombol Aksi Utama -->
-                <div class="flex flex-wrap gap-3 mb-2 items-center">
-                    <button onclick="cariDataRAPI()" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 px-5 rounded-lg transition shadow-md text-sm">
-                        Cari Data & Catat Log
+                <div class="flex flex-wrap gap-2 mb-3 items-center">
+                    <button onclick="cariDataRAPI()" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 px-4 rounded-lg transition shadow-md text-xs md:text-sm flex-1 sm:flex-none">
+                        ?? Cari Data & Catat Log
                     </button>
-                    <button onclick="downloadLayoutFile()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded-lg transition shadow-md text-xs">
-                        ?? Simpan Tata Letak (.json)
+                    <button onclick="downloadLayoutFile()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-lg transition shadow-md text-xs">
+                        ?? Simpan Tata Letak
                     </button>
-                    <label class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg transition shadow-md text-xs cursor-pointer">
+                    <label class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-3 rounded-lg transition shadow-md text-xs cursor-pointer">
                         ?? Muat Tata Letak
                         <input type="file" accept=".json" onchange="uploadLayoutFile(event)" class="hidden">
                     </label>
-                    <button onclick="downloadCardImage()" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 px-4 rounded-lg transition shadow-md text-xs ml-auto">
-                        ??? Unduh Gambar (PNG Terang)
+                    <button onclick="downloadCardImage()" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 px-3 rounded-lg transition shadow-md text-xs ml-auto">
+                        ?? Unduh Gambar (PNG)
                     </button>
                 </div>
 
-                <hr class="border-slate-800 my-4">
+                <hr class="border-slate-800 my-3">
 
-                <!-- Panel Upload Database, Background & Tombol Clear Storage -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm items-end">
+                <!-- Upload Database & Background -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm items-end">
                     <div>
                         <label class="block font-medium text-slate-300 mb-1 text-xs">Upload Database (CSV/JSON)</label>
                         <input type="file" id="dbFileUpload" accept=".csv, .json" onchange="loadCustomDatabase(event)"
-                               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-300 file:mr-1 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500">
+                               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-300 file:mr-1 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white">
                     </div>
                     <div>
-                        <label class="block font-medium text-slate-300 mb-1 text-xs">Upload Gambar Latar Kartu</label>
+                        <label class="block font-medium text-slate-300 mb-1 text-xs">Upload Background Kartu</label>
                         <input type="file" id="bgImageUpload" accept="image/*" onchange="previewCardBackground(event)"
-                               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-300 file:mr-1 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber-600 file:text-white hover:file:bg-amber-500">
+                               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-300 file:mr-1 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber-600 file:text-white">
                     </div>
                     <div>
                         <label class="block font-medium text-slate-300 mb-1 text-xs">Upload Foto / Stiker</label>
                         <input type="file" id="imageUpload" accept="image/*" onchange="previewImage(event)"
-                               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-300 file:mr-1 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber-600 file:text-white hover:file:bg-amber-500">
+                               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-300 file:mr-1 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber-600 file:text-white">
                     </div>
                     <div>
-                        <button onclick="clearAllLocalStorage()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2 px-3 rounded-lg transition shadow text-xs flex items-center justify-center gap-1.5" title="Hapus seluruh penyimpanan lokal browser">
-                            ??? Reset Semua Data Browser
+                        <button onclick="clearAllLocalStorage()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2 px-3 rounded-lg transition shadow text-xs flex items-center justify-center gap-1.5">
+                            ?? Reset Semua Data
                         </button>
                     </div>
                 </div>
-                <p id="statusInfo" class="text-xs text-slate-400 mt-3">*Database aktif dan log QSO tersimpan otomatis di browser Anda.</p>
+                <p id="statusInfo" class="text-xs text-slate-400 mt-2">*Database aktif & log tersimpan otomatis di browser.</p>
             </div>
 
-            <!-- Layout Utama: Area Desain di Kiri & Panel Kontrol Tampilan di Kanan -->
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+            <!-- Layout Utama: Area Desain & Panel Kontrol Tampilan -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 items-start">
                 
-                <!-- Area Preview / QSL Card Lebih Terang (Mengisi 3 Kolom) -->
-                <div class="lg:col-span-3 flex justify-center">
-                    <div id="printable-card" class="qsl-card bg-gradient-to-br from-slate-800 via-sky-950 to-indigo-950 border-4 border-amber-400 rounded-2xl p-4 shadow-2xl overflow-hidden" style="background-color: #1e293b;">
+                <!-- Area Preview QSL Card (3 Kolom) -->
+                <div class="lg:col-span-3 flex justify-center overflow-x-auto py-2">
+                    <div id="printable-card" class="qsl-card bg-gradient-to-br from-slate-800 via-sky-950 to-indigo-950 border-4 border-amber-400 rounded-2xl p-3 md:p-4 shadow-2xl overflow-hidden" style="background-color: #1e293b; min-width: 320px;">
                         
                         <div id="cardOverlay" class="absolute inset-0 bg-white/5 pointer-events-none -z-10"></div>
                         <div class="absolute -right-10 -bottom-10 opacity-15 pointer-events-none">
-                            <span class="text-9xl font-extrabold font-mono-custom text-amber-500">RAPI</span>
+                            <span class="text-7xl md:text-9xl font-extrabold font-mono-custom text-amber-500">RAPI</span>
                         </div>
 
                         <!-- 1. Header -->
-                        <div id="box-header" class="draggable-box top-4 left-4 flex justify-between items-center border-b border-amber-500/40 pb-2 z-20">
+                        <div id="box-header" class="draggable-box top-3 left-3 flex justify-between items-center border-b border-amber-500/40 pb-2 z-20">
                             <div class="flex items-center gap-2 w-full">
-                                <img src="{{ url_for('static', filename='logo_rapi.png') }}" alt="Logo" class="h-9 w-9 object-contain bg-white/15 p-1 rounded border border-amber-500/50">
+                                <img src="/static/logo_rapi.png" alt="Logo" class="h-8 w-8 md:h-9 md:w-9 object-contain bg-white/15 p-1 rounded border border-amber-500/50">
                                 <div>
-                                    <div id="displayFreqHeader" class="text-amber-300 font-bold box-text" data-base="11">RAPI 143.040 MHz</div>
-                                    <h1 class="font-extrabold text-white font-mono-custom box-text" data-base="18">QSL CARD</h1>
-                                    <div id="displayEvent" class="text-sky-200 italic box-text" data-base="10">Event: Rutin / Net Lokal</div>
+                                    <div id="displayFreqHeader" class="text-amber-300 font-bold box-text text-xs md:text-sm" data-base="11">RAPI 143.040 MHz</div>
+                                    <h1 class="font-extrabold text-white font-mono-custom box-text text-sm md:text-lg" data-base="18">QSL CARD</h1>
+                                    <div id="displayEvent" class="text-sky-200 italic box-text text-[10px] md:text-xs" data-base="10">Event: Rutin / Net Lokal</div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- 2. Kotak Stasiun -->
-                        <div id="box-station" class="draggable-box top-28 left-4 z-20 shadow-lg">
-                            <div class="text-sky-300 uppercase tracking-wider mb-1 box-text" data-base="10">CONFIRMING QSO WITH</div>
-                            <div id="displayCallsign" class="font-bold text-amber-300 font-mono-custom box-text" data-base="22">JZ10IXM</div>
-                            <div id="displayName" class="font-semibold text-white mt-0.5 box-text" data-base="15">DIAN HERMAWAN</div>
-                            <div id="displayAddress" class="text-slate-200 mt-0.5 leading-tight box-text" data-base="12">Kabupaten Ciamis, Jawa Barat</div>
+                        <div id="box-station" class="draggable-box top-24 left-3 z-20 shadow-lg">
+                            <div class="text-sky-300 uppercase tracking-wider mb-0.5 box-text text-[10px] md:text-xs" data-base="10">CONFIRMING QSO WITH</div>
+                            <div id="displayCallsign" class="font-bold text-amber-300 font-mono-custom box-text text-base md:text-xl" data-base="22">JZ10IXM</div>
+                            <div id="displayName" class="font-semibold text-white mt-0.5 box-text text-xs md:text-sm" data-base="15">DIAN HERMAWAN</div>
+                            <div id="displayAddress" class="text-slate-200 mt-0.5 leading-tight box-text text-[10px] md:text-xs" data-base="12">Kabupaten Ciamis, Jawa Barat</div>
                         </div>
 
                         <!-- 3. Kotak QSO -->
-                        <div id="box-qso" class="draggable-box top-28 right-4 z-20 shadow-lg">
-                            <div class="grid grid-cols-2 gap-1 font-mono-custom box-text" data-base="12">
+                        <div id="box-qso" class="draggable-box top-24 right-3 z-20 shadow-lg">
+                            <div class="grid grid-cols-2 gap-1 font-mono-custom box-text text-[11px] md:text-xs" data-base="12">
                                 <div><span class="text-sky-300">FREQ:</span> <strong id="displayFreqBox" class="text-amber-300">143.040</strong></div>
                                 <div><span class="text-sky-300">RST:</span> <strong id="displayRst" class="text-white">59</strong></div>
                                 <div><span class="text-sky-300">DATE:</span> <strong id="displayDate" class="text-white">-</strong></div>
@@ -214,26 +215,25 @@
                                 </div>
                             </div>
                             <div id="imagePreviewContainer" class="mt-2 hidden">
-                                <img id="userUploadedImage" src="" alt="Custom" class="h-10 w-full object-cover rounded border border-amber-500/40">
+                                <img id="userUploadedImage" src="" alt="Custom" class="h-8 md:h-10 w-full object-cover rounded border border-amber-500/40">
                             </div>
                         </div>
 
                         <!-- 4. Footer -->
-                        <div id="box-footer" class="draggable-box bottom-3 left-4 flex justify-between items-end border-t border-slate-700/60 pt-1 z-20">
+                        <div id="box-footer" class="draggable-box bottom-2 left-3 flex justify-between items-end border-t border-slate-700/60 pt-1 z-20">
                             <div>
-                                <span class="text-sky-300 box-text" data-base="10">Dibuat Oleh :</span>
-                                <div class="text-white font-bold font-mono-custom box-text" data-base="13">JZ10IXM - DIAN HERMAWAN</div>
+                                <span class="text-sky-300 box-text text-[10px] md:text-xs" data-base="10">Dibuat Oleh :</span>
+                                <div class="text-white font-bold font-mono-custom box-text text-xs md:text-sm" data-base="13">JZ10IXM - DIAN HERMAWAN</div>
                             </div>
                         </div>
 
                     </div>
                 </div>
 
-                <!-- Panel Pengaturan Tampilan & Warna di Pinggir Desain (1 Kolom) -->
-                <div class="bg-slate-900 p-4 rounded-2xl shadow-xl border border-slate-800 no-print space-y-4">
-                    <h3 class="text-sm font-bold text-amber-400 border-b border-slate-800 pb-2">??? Kontrol Tampilan Kotak</h3>
+                <!-- Panel Kontrol Tampilan & Warna (1 Kolom) -->
+                <div class="bg-slate-900 p-4 rounded-2xl shadow-xl border border-slate-800 no-print space-y-3">
+                    <h3 class="text-xs md:text-sm font-bold text-amber-400 border-b border-slate-800 pb-2">??? Kontrol Tampilan Kotak</h3>
                     
-                    <!-- Pemilihan Target Kotak untuk Pengaturan -->
                     <div class="space-y-1">
                         <label class="block text-xs font-medium text-slate-300">?? Pilih Kotak Target</label>
                         <select id="targetBoxSelect" onchange="syncControllerValues()" class="w-full bg-slate-950 border border-slate-700 text-white rounded px-2 py-1.5 text-xs">
@@ -246,9 +246,8 @@
 
                     <hr class="border-slate-800">
 
-                    <!-- Pengatur Transparansi Per Kolom -->
                     <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">?? Transparansi Kotak Terpilih</label>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">?? Transparansi Kotak</label>
                         <input type="range" id="opacityRange" min="0.0" max="1.0" step="0.05" value="0.90" oninput="changeBoxOpacity(this.value)" class="w-full accent-amber-500 cursor-pointer">
                         <div class="flex justify-between text-[10px] text-slate-400 mt-0.5">
                             <span>Transparan</span>
@@ -259,9 +258,8 @@
 
                     <hr class="border-slate-800">
 
-                    <!-- Pengatur Ukuran Huruf Manual Per Kolom -->
-                    <div class="space-y-2">
-                        <label class="block text-xs font-medium text-slate-300">?? Ukuran Huruf Kotak Terpilih</label>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-medium text-slate-300">?? Ukuran Huruf Kotak</label>
                         <div class="grid grid-cols-3 gap-1 pt-1">
                             <button onclick="adjustFontSize(1)" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-1.5 rounded text-xs transition">A (+)</button>
                             <button onclick="adjustFontSize(-1)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-1.5 rounded text-xs transition">A (-)</button>
@@ -271,54 +269,50 @@
 
                     <hr class="border-slate-800">
 
-                    <!-- Pengatur Warna Huruf Per Kolom -->
-                    <div class="space-y-2">
-                        <label class="block text-xs font-medium text-slate-300">?? Warna Huruf Kotak Terpilih</label>
+                    <div class="space-y-1">
+                        <label class="block text-xs font-medium text-slate-300">?? Warna Huruf Kotak</label>
                         <div class="flex items-center gap-2">
                             <input type="color" id="textColorPicker" value="#ffffff" onchange="changeTextColor(this.value)" class="w-10 h-8 bg-slate-950 border border-slate-700 rounded cursor-pointer p-0.5">
-                            <span class="text-[11px] text-slate-400">Pilih warna teks kotak aktif</span>
+                            <span class="text-[11px] text-slate-400">Pilih warna teks aktif</span>
                         </div>
                     </div>
 
                     <hr class="border-slate-800">
 
-                    <!-- Tombol Reset Pengaturan Tata Letak -->
                     <div>
                         <button onclick="resetLayoutSettings()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2 px-3 rounded-lg transition shadow text-xs flex items-center justify-center gap-1.5">
-                            ?? Reset Posisi & Tampilan Saja
+                            ?? Reset Posisi & Tampilan
                         </button>
                     </div>
                 </div>
 
             </div>
 
-            <!-- Panel Log Data QSO & Ekspor (Excel & JPG) dengan Fitur Pencarian -->
-            <div class="bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800 no-print mt-6 space-y-4">
+            <!-- Panel Log Data QSO & Ekspor -->
+            <div class="bg-slate-900 p-4 md:p-6 rounded-2xl shadow-xl border border-slate-800 no-print mt-4 space-y-3">
                 <div class="flex flex-wrap justify-between items-center gap-3">
-                    <h3 class="text-lg font-bold text-amber-400">?? Log Data QSO & QSL Card Manager</h3>
+                    <h3 class="text-sm md:text-lg font-bold text-amber-400">?? Log Data QSO & QSL Manager</h3>
                     <div class="flex flex-wrap gap-2">
-                        <button onclick="exportToJPG()" class="bg-red-600 hover:bg-red-500 text-white text-xs font-semibold py-2 px-4 rounded-lg transition shadow">
-                            ?? Ekspor Log ke Gambar (JPG)
+                        <button onclick="exportToJPG()" class="bg-red-600 hover:bg-red-500 text-white text-xs font-semibold py-1.5 px-3 rounded-lg transition shadow">
+                            ??? Ekspor Log JPG
                         </button>
-                        <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-2 px-4 rounded-lg transition shadow">
-                            ?? Ekspor Log ke Excel (CSV)
+                        <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 px-3 rounded-lg transition shadow">
+                            ?? Ekspor Excel (CSV)
                         </button>
                     </div>
                 </div>
 
-                <!-- Kolom Pencarian / Filter Log -->
                 <div>
-                    <input type="text" id="searchLogInput" placeholder="?? Cari berdasarkan Callsign, Nama, atau Event..." oninput="updateLogTable()"
+                    <input type="text" id="searchLogInput" placeholder="?? Cari Callsign, Nama, atau Event..." oninput="updateLogTable()"
                            class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
                 </div>
 
-                <!-- Area Tabel Log yang akan di-export ke JPG -->
-                <div id="logTableArea" class="overflow-x-auto bg-slate-900 p-4 rounded-xl border border-slate-800">
+                <div id="logTableArea" class="overflow-x-auto bg-slate-900 p-2 md:p-4 rounded-xl border border-slate-800">
                     <div class="flex items-center gap-3 mb-4 hidden log-title-header border-b border-slate-700 pb-3">
-                        <img src="{{ url_for('static', filename='logo_rapi.png') }}" alt="Logo RAPI" class="h-10 w-10 object-contain bg-white/10 p-1.5 rounded border border-amber-500/50">
+                        <img src="/static/logo_rapi.png" alt="Logo" class="h-8 w-8 object-contain bg-white/10 p-1 rounded border border-amber-500/50">
                         <div>
-                            <h2 id="jpgHeaderEvent" class="text-base font-bold text-white">RIWAYAT LOG QSO RAPI - EVENT</h2>
-                            <p id="jpgHeaderDate" class="text-xs text-amber-300 font-mono">Tanggal Pelaksanaan: -</p>
+                            <h2 id="jpgHeaderEvent" class="text-sm md:text-base font-bold text-white">RIWAYAT LOG QSO RAPI</h2>
+                            <p id="jpgHeaderDate" class="text-xs text-amber-300 font-mono">Tanggal: -</p>
                         </div>
                     </div>
                     <table class="w-full text-left text-xs text-slate-300 border-collapse">
@@ -327,7 +321,7 @@
                                 <th class="p-2">Tanggal</th>
                                 <th class="p-2">Waktu</th>
                                 <th class="p-2">Callsign</th>
-                                <th class="p-2">Frekuensi</th>
+                                <th class="p-2">Freq</th>
                                 <th class="p-2">Nama</th>
                                 <th class="p-2">Alamat</th>
                                 <th class="p-2">RST</th>
@@ -338,7 +332,7 @@
                         </thead>
                         <tbody id="logTableBody">
                             <tr>
-                                <td colspan="10" class="p-4 text-center text-slate-500">Belum ada data QSO tercatat. Masukkan callsign untuk mencatat log.</td>
+                                <td colspan="10" class="p-4 text-center text-slate-500">Belum ada data QSO tercatat.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -347,16 +341,16 @@
 
         </div>
 
-        <!-- KONTEN TAB 2: ABOUT DEVELOPER -->
-        <div id="contentAbout" class="hidden bg-slate-900 p-8 rounded-2xl shadow-xl border border-slate-800 max-w-2xl mx-auto text-center space-y-6">
-            <div class="inline-block bg-amber-500/10 border border-amber-500/30 p-4 rounded-full text-4xl">
+        <!-- KONTEN TAB 2: ABOUT -->
+        <div id="contentAbout" class="hidden bg-slate-900 p-6 md:p-8 rounded-2xl shadow-xl border border-slate-800 max-w-2xl mx-auto text-center space-y-6">
+            <div class="inline-block bg-amber-500/10 border border-amber-500/30 p-4 rounded-full text-3xl">
                 ?????
             </div>
             <div>
-                <h2 class="text-2xl font-bold text-amber-400">Tentang Pengembang</h2>
-                <p class="text-xs text-slate-400 mt-1">Aplikasi Generator QSL Card & Log QSO Resmi RAPI</p>
+                <h2 class="text-xl md:text-2xl font-bold text-amber-400">Tentang Pengembang</h2>
+                <p class="text-xs text-slate-400 mt-1">Generator QSL Card & Log QSO Resmi RAPI</p>
             </div>
-            <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-3 text-left">
+            <div class="bg-slate-950 p-4 md:p-6 rounded-xl border border-slate-800 space-y-3 text-left text-xs md:text-sm">
                 <div class="flex justify-between border-b border-slate-800 pb-2">
                     <span class="text-slate-400">Callsign Utama:</span>
                     <strong class="text-amber-400 font-mono">JZ10IXM</strong>
@@ -371,13 +365,12 @@
                 </div>
                 <div class="flex justify-between">
                     <span class="text-slate-400">Organisasi:</span>
-                    <strong class="text-sky-300">Radio Antar Penduduk Indonesia (RAPI)</strong>
+                    <strong class="text-sky-300">RAPI</strong>
                 </div>
             </div>
-            <p class="text-xs text-slate-400 italic">"Membangun komunikasi udara yang handal, tertib, dan bersahabat melalui sarana digital modern."</p>
             <div>
                 <button onclick="switchTab('generator')" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold px-6 py-2.5 rounded-lg transition shadow">
-                    Kembali ke Generator QSL ??
+                    Kembali ke Generator ??
                 </button>
             </div>
         </div>
@@ -387,7 +380,7 @@
     <script>
         let userEditedTime = false;
         let timeInterval;
-        let currentTZ = 'Asia/Jakarta'; // Default WIB
+        let currentTZ = 'Asia/Jakarta';
         let currentZoneName = 'WIB';
         let qsoLogs = JSON.parse(localStorage.getItem('rapiQsoLogs') || '[]');
 
@@ -400,39 +393,31 @@
             if (tabName === 'generator') {
                 genContent.classList.remove('hidden');
                 aboutContent.classList.add('hidden');
-                tabGenBtn.className = "bg-amber-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition shadow";
-                tabAboutBtn.className = "bg-slate-800 text-slate-300 hover:bg-slate-700 px-4 py-1.5 rounded-lg text-xs font-semibold transition shadow";
+                tabGenBtn.className = "bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow";
+                tabAboutBtn.className = "bg-slate-800 text-slate-300 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow";
             } else {
                 genContent.classList.add('hidden');
                 aboutContent.classList.remove('hidden');
-                tabAboutBtn.className = "bg-amber-600 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition shadow";
-                tabGenBtn.className = "bg-slate-800 text-slate-300 hover:bg-slate-700 px-4 py-1.5 rounded-lg text-xs font-semibold transition shadow";
+                tabAboutBtn.className = "bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow";
+                tabGenBtn.className = "bg-slate-800 text-slate-300 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow";
             }
         }
 
-        // Pengaturan Pilihan Zona Waktu (WIB, WITA, WIT)
         function setZone(zone) {
             userEditedTime = false;
             currentZoneName = zone;
+            if (zone === 'WIB') currentTZ = 'Asia/Jakarta';
+            else if (zone === 'WITA') currentTZ = 'Asia/Makassar';
+            else if (zone === 'WIT') currentTZ = 'Asia/Jayapura';
 
-            if (zone === 'WIB') {
-                currentTZ = 'Asia/Jakarta'; // UTC+7
-            } else if (zone === 'WITA') {
-                currentTZ = 'Asia/Makassar'; // UTC+8
-            } else if (zone === 'WIT') {
-                currentTZ = 'Asia/Jayapura'; // UTC+9
-            }
-
-            // Atur ulang warna tombol aktif
             ['WIB', 'WITA', 'WIT'].forEach(z => {
                 const btn = document.getElementById(`btn${z}`);
                 if (z === zone) {
-                    btn.className = "bg-amber-600 hover:bg-amber-500 text-white text-xs px-2.5 py-1 rounded transition font-bold shadow";
+                    btn.className = "bg-amber-600 hover:bg-amber-500 text-white text-xs px-2.5 py-1.5 rounded transition font-bold shadow";
                 } else {
-                    btn.className = "bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-1 rounded transition font-bold shadow";
+                    btn.className = "bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-1.5 rounded transition font-bold shadow";
                 }
             });
-
             startLiveClock();
         }
 
@@ -440,16 +425,13 @@
             if (timeInterval) clearInterval(timeInterval);
             updateLiveTimeByZone();
             timeInterval = setInterval(() => {
-                if (!userEditedTime) {
-                    updateLiveTimeByZone();
-                }
+                if (!userEditedTime) updateLiveTimeByZone();
             }, 1000);
         }
 
         function updateLiveTimeByZone() {
             const optionsDate = { timeZone: currentTZ, year: 'numeric', month: '2-digit', day: '2-digit' };
             const optionsTime = { timeZone: currentTZ, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-            
             const now = new Date();
             const dateFormatter = new Intl.DateTimeFormat('en-CA', optionsDate);
             const timeFormatter = new Intl.DateTimeFormat('en-GB', optionsTime);
@@ -464,12 +446,6 @@
             updateDateTime();
         }
 
-        function resumeLiveTime() {
-            userEditedTime = false;
-            startLiveClock();
-            saveCurrentState();
-        }
-
         function updateFreqText() {
             const freq = document.getElementById('freqInput').value.trim() || "143.040";
             document.getElementById('displayFreqHeader').innerText = `RAPI ${freq} MHz`;
@@ -480,7 +456,6 @@
             const boxId = document.getElementById('targetBoxSelect').value;
             const box = document.getElementById(boxId);
             if (!box) return;
-
             const bgColor = window.getComputedStyle(box).backgroundColor;
             const rgbaMatch = bgColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
             if (rgbaMatch) {
@@ -494,7 +469,6 @@
             const boxId = document.getElementById('targetBoxSelect').value;
             const box = document.getElementById(boxId);
             if (!box) return;
-
             box.style.backgroundColor = `rgba(30, 41, 59, ${val})`;
             document.getElementById('opacityValue').innerText = Math.round(val * 100) + '%';
             saveCurrentState();
@@ -504,7 +478,6 @@
             const boxId = document.getElementById('targetBoxSelect').value;
             const box = document.getElementById(boxId);
             if (!box) return;
-
             box.style.color = color;
             box.querySelectorAll('*').forEach(el => {
                 if (!el.classList.contains('text-amber-400') && !el.classList.contains('text-amber-300')) {
@@ -515,16 +488,16 @@
         }
 
         function resetLayoutSettings() {
-            if (confirm("Reset posisi kotak, ukuran, transparansi, dan warna huruf kembali ke awal?")) {
+            if (confirm("Reset posisi kotak, transparansi, dan warna huruf?")) {
                 localStorage.removeItem('qslCardActiveState');
                 location.reload();
             }
         }
 
         function clearAllLocalStorage() {
-            if (confirm("PERINGATAN: Ini akan menghapus seluruh data tersimpan termasuk Log QSO, Database kustom, dan Tata letak kartu. Lanjutkan?")) {
+            if (confirm("Hapus seluruh penyimpanan lokal (Log & Database)?")) {
                 localStorage.clear();
-                alert("Semua data browser berhasil dibersihkan!");
+                alert("Data berhasil dibersihkan!");
                 location.reload();
             }
         }
@@ -536,16 +509,13 @@
             if (savedState.rstReport) document.getElementById('rstReport').value = savedState.rstReport;
             if (savedState.ncsInput) document.getElementById('ncsInput').value = savedState.ncsInput;
             if (savedState.eventInput) document.getElementById('eventInput').value = savedState.eventInput;
-            
             if (savedState.dateInput) document.getElementById('dateInput').value = savedState.dateInput;
-            
             if (savedState.timeInput) {
                 document.getElementById('timeInput').value = savedState.timeInput;
                 userEditedTime = true;
             } else {
                 startLiveClock();
             }
-
             if (savedState.displayCallsign) document.getElementById('displayCallsign').innerText = savedState.displayCallsign;
             if (savedState.displayName) document.getElementById('displayName').innerText = savedState.displayName;
             if (savedState.displayAddress) document.getElementById('displayAddress').innerText = savedState.displayAddress;
@@ -571,13 +541,10 @@
                                 }
                             });
                         }
-                        
                         if (savedState.layout[id].fontSizes) {
                             const texts = box.querySelectorAll('.box-text');
                             texts.forEach((el, index) => {
-                                if (savedState.layout[id].fontSizes[index]) {
-                                    el.style.fontSize = savedState.layout[id].fontSizes[index];
-                                }
+                                if (savedState.layout[id].fontSizes[index]) el.style.fontSize = savedState.layout[id].fontSizes[index];
                             });
                         }
                     }
@@ -594,15 +561,7 @@
                 box.querySelectorAll('.box-text').forEach(el => {
                     fontSizes.push(el.style.fontSize || `${el.getAttribute('data-base')}px`);
                 });
-                layout[box.id] = { 
-                    left: box.style.left, 
-                    top: box.style.top, 
-                    width: box.style.width, 
-                    height: box.style.height,
-                    bgColor: box.style.backgroundColor,
-                    color: box.style.color,
-                    fontSizes: fontSizes
-                };
+                layout[box.id] = { left: box.style.left, top: box.style.top, width: box.style.width, height: box.style.height, bgColor: box.style.backgroundColor, color: box.style.color, fontSizes: fontSizes };
             });
             const state = {
                 targetCallsign: document.getElementById('targetCallsign').value,
@@ -626,15 +585,13 @@
         }
 
         function updateEventText() {
-            const eventVal = document.getElementById('eventInput').value;
-            document.getElementById('displayEvent').innerText = `Event: ${eventVal}`;
+            document.getElementById('displayEvent').innerText = `Event: ${document.getElementById('eventInput').value}`;
         }
 
         function adjustFontSize(change) {
             const boxId = document.getElementById('targetBoxSelect').value;
             const box = document.getElementById(boxId);
             if (!box) return;
-
             box.querySelectorAll('.box-text').forEach(el => {
                 let currentSize = parseFloat(window.getComputedStyle(el).fontSize);
                 el.style.fontSize = `${Math.max(8, currentSize + (change * 2))}px`;
@@ -646,18 +603,13 @@
             const boxId = document.getElementById('targetBoxSelect').value;
             const box = document.getElementById(boxId);
             if (!box) return;
-
             box.querySelectorAll('.box-text').forEach(el => {
-                const baseSize = el.getAttribute('data-base');
-                el.style.fontSize = `${baseSize}px`;
+                el.style.fontSize = `${el.getAttribute('data-base')}px`;
             });
             saveCurrentState();
         }
 
         let customDatabase = JSON.parse(localStorage.getItem('rapiCustomDB') || '{}');
-        if (Object.keys(customDatabase).length > 0) {
-            document.getElementById('statusInfo').innerText = `Database aktif: Memuat ${Object.keys(customDatabase).length} data tersimpan di browser.`;
-        }
 
         function loadCustomDatabase(event) {
             const file = event.target.files[0];
@@ -666,40 +618,27 @@
             reader.onload = function(e) {
                 const content = e.target.result;
                 let newEntries = 0;
-                let updatedEntries = 0;
                 if (file.name.endsWith('.json')) {
-                    try { 
+                    try {
                         const parsed = JSON.parse(content);
                         Object.keys(parsed).forEach(cs => {
-                            const upperCs = cs.trim().toUpperCase();
-                            if (customDatabase[upperCs]) updatedEntries++;
-                            else newEntries++;
-                            customDatabase[upperCs] = parsed[cs];
+                            customDatabase[cs.trim().toUpperCase()] = parsed[cs];
+                            newEntries++;
                         });
                     } catch(err) { alert("Format JSON salah!"); return; }
-                } else if (file.name.endsWith('.csv')) {
-                    content.split('\n').forEach(line => {
-                        const parts = line.split(',');
-                        if (parts.length >= 3) {
-                            const cs = parts[0].trim().toUpperCase();
-                            if (customDatabase[cs]) updatedEntries++;
-                            else newEntries++;
-                            customDatabase[cs] = { name: parts[1].trim().toUpperCase(), address: parts[2].trim() };
-                        }
-                    });
                 }
                 localStorage.setItem('rapiCustomDB', JSON.stringify(customDatabase));
-                alert(`Database diperbarui!\n- Data Baru: ${newEntries}\n- Data Diupdate: ${updatedEntries}`);
-                document.getElementById('statusInfo').innerText = `Database aktif: Total ${Object.keys(customDatabase).length} data tersimpan.`;
+                alert(`Database diperbarui! Total: ${Object.keys(customDatabase).length} data.`);
             };
             reader.readAsText(file);
         }
 
+        // Penanganan Sentuhan Jari (Touch/Pointer) yang Optimal di HP & PC
         document.querySelectorAll('.draggable-box').forEach(box => {
             let isDragging = false, startX, startY, initialX, initialY;
 
             box.addEventListener('pointerdown', (e) => {
-                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'IMG') return;
+                if (['BUTTON', 'INPUT', 'IMG'].includes(e.target.tagName)) return;
                 isDragging = true;
                 startX = e.clientX; startY = e.clientY;
                 const rect = box.getBoundingClientRect();
@@ -731,12 +670,9 @@
                 states[box.id] = { left: box.style.left, top: box.style.top, width: box.style.width, height: box.style.height, bgColor: box.style.backgroundColor, color: box.style.color, fontSizes: fontSizes };
             });
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(states, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", "qsl_layout_config.json");
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
+            const a = document.createElement('a');
+            a.href = dataStr; a.download = "qsl_layout_config.json";
+            document.body.appendChild(a); a.click(); a.remove();
         }
 
         function uploadLayoutFile(event) {
@@ -754,109 +690,21 @@
                             if (states[id].width) box.style.width = states[id].width;
                             if (states[id].height) box.style.height = states[id].height;
                             if (states[id].bgColor) box.style.backgroundColor = states[id].bgColor;
-                            if (states[id].color) {
-                                box.style.color = states[id].color;
-                                box.querySelectorAll('*').forEach(el => {
-                                    if (!el.classList.contains('text-amber-400') && !el.classList.contains('text-amber-300')) {
-                                        el.style.color = states[id].color;
-                                    }
-                                });
-                            }
-                            if (states[id].fontSizes) {
-                                const texts = box.querySelectorAll('.box-text');
-                                texts.forEach((el, index) => {
-                                    if (states[id].fontSizes[index]) el.style.fontSize = states[id].fontSizes[index];
-                                });
-                            }
                         }
                     });
                     saveCurrentState();
                     alert("Tata letak berhasil dimuat!");
-                } catch(err) { alert("File konfigurasi tidak valid!"); }
+                } catch(err) { alert("File tidak valid!"); }
             };
             reader.readAsText(file);
         }
 
         function downloadCardImage() {
-            const cardElement = document.getElementById('printable-card');
-            html2canvas(cardElement, { scale: 3, useCORS: true, backgroundColor: "#1e293b" }).then(canvas => {
+            html2canvas(document.getElementById('printable-card'), { scale: 3, useCORS: true, backgroundColor: "#1e293b" }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `QSL_Card_${document.getElementById('displayCallsign').innerText}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-            });
-        }
-
-        function downloadLogCard(index) {
-            const log = qsoLogs[index];
-            if (!log) return;
-
-            document.getElementById('targetCallsign').value = log.callsign;
-            document.getElementById('freqInput').value = log.freq;
-            document.getElementById('rstReport').value = log.rst;
-            document.getElementById('ncsInput').value = log.ncs;
-            document.getElementById('eventInput').value = log.event;
-            document.getElementById('dateInput').value = log.date;
-            document.getElementById('timeInput').value = log.time;
-
-            document.getElementById('displayCallsign').innerText = log.callsign;
-            document.getElementById('displayName').innerText = log.name;
-            document.getElementById('displayAddress').innerText = log.address;
-            document.getElementById('displayRst').innerText = log.rst;
-            document.getElementById('displayNcs').innerText = log.ncs;
-            document.getElementById('displayFreqBox').innerText = log.freq;
-            document.getElementById('displayFreqHeader').innerText = `RAPI ${log.freq} MHz`;
-            document.getElementById('displayEvent').innerText = `Event: ${log.event}`;
-            document.getElementById('displayDate').innerText = log.date;
-            document.getElementById('displayTime').innerText = log.time;
-
-            setTimeout(() => {
-                const cardElement = document.getElementById('printable-card');
-                html2canvas(cardElement, { scale: 3, useCORS: true, backgroundColor: "#1e293b" }).then(canvas => {
-                    const link = document.createElement('a');
-                    link.download = `QSL_Card_${log.callsign}_${log.date}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                });
-            }, 100);
-        }
-
-        function deleteLogItem(index) {
-            if (confirm("Hapus data QSO ini dari riwayat log?")) {
-                qsoLogs.splice(index, 1);
-                localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
-                updateLogTable();
-            }
-        }
-
-        function exportToJPG() {
-            if (qsoLogs.length === 0) { alert("Belum ada data log untuk diekspor ke gambar!"); return; }
-
-            const tableArea = document.getElementById('logTableArea');
-            const titleHeader = tableArea.querySelector('.log-title-header');
-            const actionCols = tableArea.querySelectorAll('.action-col');
-
-            const currentEvent = document.getElementById('eventInput').value.trim() || "Rutin / Net Lokal";
-            const currentDate = document.getElementById('dateInput').value || "-";
-
-            document.getElementById('jpgHeaderEvent').innerText = `RIWAYAT LOG QSO RAPI - EVENT: ${currentEvent.toUpperCase()}`;
-            document.getElementById('jpgHeaderDate').innerText = `Tanggal Pelaksanaan: ${currentDate}`;
-
-            titleHeader.classList.remove('hidden');
-            actionCols.forEach(col => col.classList.add('hidden'));
-
-            html2canvas(tableArea, { scale: 2, useCORS: true, backgroundColor: "#0f172a" }).then(canvas => {
-                titleHeader.classList.add('hidden');
-                actionCols.forEach(col => col.classList.remove('hidden'));
-
-                const link = document.createElement('a');
-                link.download = `Log_QSO_${currentEvent.replace(/\s+/g, '_')}_${currentDate}.jpg`;
-                link.href = canvas.toDataURL('image/jpeg', 0.95);
-                link.click();
-            }).catch(err => {
-                titleHeader.classList.add('hidden');
-                actionCols.forEach(col => col.classList.remove('hidden'));
-                alert("Gagal mengunduh gambar log.");
             });
         }
 
@@ -889,7 +737,6 @@
             const eventName = document.getElementById('eventInput').value.trim();
             const dateVal = document.getElementById('dateInput').value;
             const timeVal = document.getElementById('timeInput').value;
-            const statusInfo = document.getElementById('statusInfo');
 
             if (!callsign) { alert("Masukkan Callsign terlebih dahulu!"); return; }
 
@@ -898,7 +745,6 @@
             updateFreqText();
 
             let name = "", address = "", source = "";
-
             if (customDatabase[callsign]) {
                 name = customDatabase[callsign].name;
                 address = customDatabase[callsign].address;
@@ -920,8 +766,6 @@
             document.getElementById('displayCallsign').innerText = callsign;
             document.getElementById('displayName').innerText = name;
             document.getElementById('displayAddress').innerText = address;
-            statusInfo.innerText = `Data dimuat dari (${source}) dan dicatat ke log.`;
-            statusInfo.className = "text-xs text-emerald-400 mt-3";
 
             qsoLogs.push({ date: dateVal, time: timeVal, callsign, freq, name, address, rst: rst || "59", ncs: ncs || "-", event: eventName });
             localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
@@ -932,16 +776,12 @@
         function updateLogTable() {
             const tbody = document.getElementById('logTableBody');
             const searchKeyword = (document.getElementById('searchLogInput')?.value || "").toLowerCase();
-
             const filteredLogs = qsoLogs.map((log, originalIndex) => ({ log, originalIndex })).filter(({ log }) => {
-                return log.callsign.toLowerCase().includes(searchKeyword) ||
-                       log.name.toLowerCase().includes(searchKeyword) ||
-                       log.event.toLowerCase().includes(searchKeyword) ||
-                       log.date.toLowerCase().includes(searchKeyword);
+                return log.callsign.toLowerCase().includes(searchKeyword) || log.name.toLowerCase().includes(searchKeyword) || log.event.toLowerCase().includes(searchKeyword);
             });
 
             if (filteredLogs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500">Tidak ada data QSO yang cocok atau belum tercatat.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500">Belum ada data log.</td></tr>`;
                 return;
             }
 
@@ -951,42 +791,38 @@
                     <td class="p-2">${log.date}</td>
                     <td class="p-2">${log.time}</td>
                     <td class="p-2 font-bold text-amber-400">${log.callsign}</td>
-                    <td class="p-2 font-mono text-amber-300">${log.freq} MHz</td>
+                    <td class="p-2 font-mono text-amber-300">${log.freq}</td>
                     <td class="p-2">${log.name}</td>
                     <td class="p-2">${log.address}</td>
                     <td class="p-2">${log.rst}</td>
                     <td class="p-2">${log.ncs}</td>
                     <td class="p-2 italic">${log.event}</td>
                     <td class="p-2 text-center flex justify-center gap-1 action-col">
-                        <button onclick="downloadLogCard(${originalIndex})" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-2 py-1 rounded text-[10px] transition shadow" title="Unduh QSL Card">
-                            ??? QSL
-                        </button>
-                        <button onclick="deleteLogItem(${originalIndex})" class="bg-rose-600 hover:bg-rose-500 text-white font-semibold px-2 py-1 rounded text-[10px] transition shadow" title="Hapus Baris">
-                            ??? Hapus
-                        </button>
+                        <button onclick="downloadLogCard(${originalIndex})" class="bg-purple-600 text-white px-2 py-1 rounded text-[10px]">QSL</button>
+                        <button onclick="deleteLogItem(${originalIndex})" class="bg-rose-600 text-white px-2 py-1 rounded text-[10px]">Hapus</button>
                     </td>
                 </tr>`;
             });
         }
 
-        function exportToExcel() {
-            if (qsoLogs.length === 0) { alert("Belum ada data log untuk diekspor!"); return; }
-            let csvContent = "data:text/csv;charset=utf-8,Tanggal,Waktu,Callsign,Frekuensi,Nama,Alamat,RST,NCS,Event\n";
-            qsoLogs.forEach(row => {
-                csvContent += `${row.date},${row.time},${row.callsign},${row.freq},"${row.name}","${row.address}",${row.rst},${row.ncs},"${row.event}"\n`;
-            });
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Log_QSO_RAPI_${document.getElementById('dateInput').value}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
+        function deleteLogItem(index) {
+            if (confirm("Hapus log ini?")) {
+                qsoLogs.splice(index, 1);
+                localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
+                updateLogTable();
+            }
         }
 
-        window.onload = function() {
-            loadSavedState();
-        };
+        function exportToExcel() {
+            if (qsoLogs.length === 0) { alert("Belum ada data log!"); return; }
+            let csv = "data:text/csv;charset=utf-8,Tanggal,Waktu,Callsign,Frekuensi,Nama,Alamat,RST,NCS,Event\n";
+            qsoLogs.forEach(r => { csv += `${r.date},${r.time},${r.callsign},${r.freq},"${r.name}","${r.address}",${r.rst},${r.ncs},"${r.event}"\n`; });
+            const link = document.createElement("a");
+            link.href = encodeURI(csv); link.download = `Log_QSO_RAPI.csv`;
+            document.body.appendChild(link); link.click(); link.remove();
+        }
+
+        window.onload = function() { loadSavedState(); };
     </script>
 </body>
 </html>
