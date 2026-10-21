@@ -15,14 +15,15 @@
             width: 100%;
             max-width: 750px;
             aspect-ratio: 3 / 2;
-            background-size: cover;
+            background-size: cover; /* Default */
             background-position: center;
+            background-repeat: no-repeat;
             position: relative;
         }
         .draggable-box {
             position: absolute;
             user-select: none;
-            touch-action: none; /* Sangat penting agar lancar digeser pakai sentuhan jari di HP */
+            touch-action: none; /* Lancar digeser pakai sentuhan jari di HP */
             resize: both;
             overflow: hidden;
             min-width: 150px;
@@ -57,7 +58,7 @@
         <!-- Navigasi Tab Menu -->
         <div class="flex justify-between items-center bg-slate-900 px-4 py-3 rounded-2xl shadow-xl border border-slate-800 no-print">
             <div class="flex items-center gap-2">
-                <span class="text-xl">??</span>
+                <span class="text-xl">📡</span>
                 <h1 class="font-bold text-amber-400 text-sm md:text-lg">RAPI QSL Suite</h1>
             </div>
             <div class="flex gap-2">
@@ -76,7 +77,7 @@
             <!-- Panel Kontrol Utama Atas -->
             <div class="bg-slate-900 p-4 md:p-6 rounded-2xl shadow-xl border border-slate-800 no-print">
                 <h2 class="text-base md:text-xl font-bold text-amber-400 mb-3 flex items-center gap-2">
-                    ?? Pengaturan Data QSL Card RAPI
+                    ⚙️ Pengaturan Data QSL Card RAPI
                 </h2>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-3">
@@ -129,17 +130,17 @@
                 <!-- Tombol Aksi Utama -->
                 <div class="flex flex-wrap gap-2 mb-3 items-center">
                     <button onclick="cariDataRAPI()" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 px-4 rounded-lg transition shadow-md text-xs md:text-sm flex-1 sm:flex-none">
-                        ?? Cari Data & Catat Log
+                        🔍 Cari Data & Catat Log
                     </button>
                     <button onclick="downloadLayoutFile()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-lg transition shadow-md text-xs">
-                        ?? Simpan Tata Letak
+                        💾 Simpan Tata Letak
                     </button>
                     <label class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-3 rounded-lg transition shadow-md text-xs cursor-pointer">
-                        ?? Muat Tata Letak
+                        📂 Muat Tata Letak
                         <input type="file" accept=".json" onchange="uploadLayoutFile(event)" class="hidden">
                     </label>
                     <button onclick="downloadCardImage()" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 px-3 rounded-lg transition shadow-md text-xs ml-auto">
-                        ?? Unduh Gambar (PNG)
+                        📥 Unduh Gambar (PNG)
                     </button>
                 </div>
 
@@ -164,7 +165,7 @@
                     </div>
                     <div>
                         <button onclick="clearAllLocalStorage()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2 px-3 rounded-lg transition shadow text-xs flex items-center justify-center gap-1.5">
-                            ?? Reset Semua Data
+                            ⚠️ Reset Semua Data
                         </button>
                     </div>
                 </div>
@@ -232,10 +233,23 @@
 
                 <!-- Panel Kontrol Tampilan & Warna (1 Kolom) -->
                 <div class="bg-slate-900 p-4 rounded-2xl shadow-xl border border-slate-800 no-print space-y-3">
-                    <h3 class="text-xs md:text-sm font-bold text-amber-400 border-b border-slate-800 pb-2">??? Kontrol Tampilan Kotak</h3>
+                    <h3 class="text-xs md:text-sm font-bold text-amber-400 border-b border-slate-800 pb-2">🎛️ Kontrol Tampilan & Latar</h3>
                     
+                    <!-- Pengaturan Ukuran Gambar Latar -->
                     <div class="space-y-1">
-                        <label class="block text-xs font-medium text-slate-300">?? Pilih Kotak Target</label>
+                        <label class="block text-xs font-medium text-slate-300">🖼️ Ukuran Gambar Latar (Background)</label>
+                        <select id="bgSizeSelect" onchange="changeBgSize(this.value)" class="w-full bg-slate-950 border border-slate-700 text-white rounded px-2 py-1.5 text-xs">
+                            <option value="cover">Cover (Memenuhi Kartu / Penuh)</option>
+                            <option value="contain">Contain (Pas di Kartu / Utuh Tanpa Potong)</option>
+                            <option value="100% 100%">Stretch (Peregangan Menyesuaikan Kartu)</option>
+                            <option value="auto">Auto (Ukuran Asli Gambar)</option>
+                        </select>
+                    </div>
+
+                    <hr class="border-slate-800">
+
+                    <div class="space-y-1">
+                        <label class="block text-xs font-medium text-slate-300">📌 Pilih Kotak Target Teks</label>
                         <select id="targetBoxSelect" onchange="syncControllerValues()" class="w-full bg-slate-950 border border-slate-700 text-white rounded px-2 py-1.5 text-xs">
                             <option value="box-header">1. Header</option>
                             <option value="box-station">2. Stasiun Tujuan</option>
@@ -247,7 +261,7 @@
                     <hr class="border-slate-800">
 
                     <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">?? Transparansi Kotak</label>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">👻 Transparansi Kotak Target</label>
                         <input type="range" id="opacityRange" min="0.0" max="1.0" step="0.05" value="0.90" oninput="changeBoxOpacity(this.value)" class="w-full accent-amber-500 cursor-pointer">
                         <div class="flex justify-between text-[10px] text-slate-400 mt-0.5">
                             <span>Transparan</span>
@@ -259,7 +273,7 @@
                     <hr class="border-slate-800">
 
                     <div class="space-y-1">
-                        <label class="block text-xs font-medium text-slate-300">?? Ukuran Huruf Kotak</label>
+                        <label class="block text-xs font-medium text-slate-300">🔤 Ukuran Huruf Kotak Target</label>
                         <div class="grid grid-cols-3 gap-1 pt-1">
                             <button onclick="adjustFontSize(1)" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-1.5 rounded text-xs transition">A (+)</button>
                             <button onclick="adjustFontSize(-1)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-1.5 rounded text-xs transition">A (-)</button>
@@ -270,7 +284,7 @@
                     <hr class="border-slate-800">
 
                     <div class="space-y-1">
-                        <label class="block text-xs font-medium text-slate-300">?? Warna Huruf Kotak</label>
+                        <label class="block text-xs font-medium text-slate-300">🎨 Warna Huruf Kotak Target</label>
                         <div class="flex items-center gap-2">
                             <input type="color" id="textColorPicker" value="#ffffff" onchange="changeTextColor(this.value)" class="w-10 h-8 bg-slate-950 border border-slate-700 rounded cursor-pointer p-0.5">
                             <span class="text-[11px] text-slate-400">Pilih warna teks aktif</span>
@@ -281,7 +295,7 @@
 
                     <div>
                         <button onclick="resetLayoutSettings()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2 px-3 rounded-lg transition shadow text-xs flex items-center justify-center gap-1.5">
-                            ?? Reset Posisi & Tampilan
+                            🔄 Reset Posisi & Tampilan
                         </button>
                     </div>
                 </div>
@@ -291,19 +305,19 @@
             <!-- Panel Log Data QSO & Ekspor -->
             <div class="bg-slate-900 p-4 md:p-6 rounded-2xl shadow-xl border border-slate-800 no-print mt-4 space-y-3">
                 <div class="flex flex-wrap justify-between items-center gap-3">
-                    <h3 class="text-sm md:text-lg font-bold text-amber-400">?? Log Data QSO & QSL Manager</h3>
+                    <h3 class="text-sm md:text-lg font-bold text-amber-400">📊 Log Data QSO & QSL Manager</h3>
                     <div class="flex flex-wrap gap-2">
                         <button onclick="exportToJPG()" class="bg-red-600 hover:bg-red-500 text-white text-xs font-semibold py-1.5 px-3 rounded-lg transition shadow">
-                            ??? Ekspor Log JPG
+                            🖼️ Ekspor Log JPG
                         </button>
                         <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 px-3 rounded-lg transition shadow">
-                            ?? Ekspor Excel (CSV)
+                            📈 Ekspor Excel (CSV)
                         </button>
                     </div>
                 </div>
 
                 <div>
-                    <input type="text" id="searchLogInput" placeholder="?? Cari Callsign, Nama, atau Event..." oninput="updateLogTable()"
+                    <input type="text" id="searchLogInput" placeholder="🔎 Cari Callsign, Nama, atau Event..." oninput="updateLogTable()"
                            class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
                 </div>
 
@@ -344,7 +358,7 @@
         <!-- KONTEN TAB 2: ABOUT -->
         <div id="contentAbout" class="hidden bg-slate-900 p-6 md:p-8 rounded-2xl shadow-xl border border-slate-800 max-w-2xl mx-auto text-center space-y-6">
             <div class="inline-block bg-amber-500/10 border border-amber-500/30 p-4 rounded-full text-3xl">
-                ?????
+                👨‍💻
             </div>
             <div>
                 <h2 class="text-xl md:text-2xl font-bold text-amber-400">Tentang Pengembang</h2>
@@ -370,7 +384,7 @@
             </div>
             <div>
                 <button onclick="switchTab('generator')" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold px-6 py-2.5 rounded-lg transition shadow">
-                    Kembali ke Generator ??
+                    Kembali ke Generator ↩️
                 </button>
             </div>
         </div>
@@ -487,8 +501,14 @@
             saveCurrentState();
         }
 
+        function changeBgSize(sizeVal) {
+            const card = document.getElementById('printable-card');
+            card.style.backgroundSize = sizeVal;
+            saveCurrentState();
+        }
+
         function resetLayoutSettings() {
-            if (confirm("Reset posisi kotak, transparansi, dan warna huruf?")) {
+            if (confirm("Reset posisi kotak, transparansi, dan latar belakang?")) {
                 localStorage.removeItem('qslCardActiveState');
                 location.reload();
             }
@@ -519,6 +539,14 @@
             if (savedState.displayCallsign) document.getElementById('displayCallsign').innerText = savedState.displayCallsign;
             if (savedState.displayName) document.getElementById('displayName').innerText = savedState.displayName;
             if (savedState.displayAddress) document.getElementById('displayAddress').innerText = savedState.displayAddress;
+
+            if (savedState.bgImage) {
+                document.getElementById('printable-card').style.backgroundImage = `url('${savedState.bgImage}')`;
+            }
+            if (savedState.bgSize) {
+                document.getElementById('printable-card').style.backgroundSize = savedState.bgSize;
+                document.getElementById('bgSizeSelect').value = savedState.bgSize;
+            }
 
             updateDateTime();
             updateEventText();
@@ -563,6 +591,9 @@
                 });
                 layout[box.id] = { left: box.style.left, top: box.style.top, width: box.style.width, height: box.style.height, bgColor: box.style.backgroundColor, color: box.style.color, fontSizes: fontSizes };
             });
+            const cardBgImg = document.getElementById('printable-card').style.backgroundImage;
+            const bgImageSrc = cardBgImg ? cardBgImg.slice(5, -2) : '';
+
             const state = {
                 targetCallsign: document.getElementById('targetCallsign').value,
                 freqInput: document.getElementById('freqInput').value,
@@ -574,6 +605,8 @@
                 displayCallsign: document.getElementById('displayCallsign').innerText,
                 displayName: document.getElementById('displayName').innerText,
                 displayAddress: document.getElementById('displayAddress').innerText,
+                bgImage: bgImageSrc,
+                bgSize: document.getElementById('bgSizeSelect').value,
                 layout: layout
             };
             localStorage.setItem('qslCardActiveState', JSON.stringify(state));
@@ -633,7 +666,7 @@
             reader.readAsText(file);
         }
 
-        // Penanganan Sentuhan Jari (Touch/Pointer) yang Optimal di HP & PC
+        // Penanganan Sentuhan Jari (Touch/Pointer) untuk HP & PC
         document.querySelectorAll('.draggable-box').forEach(box => {
             let isDragging = false, startX, startY, initialX, initialY;
 
@@ -712,7 +745,10 @@
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (e) => { document.getElementById('printable-card').style.backgroundImage = `url('${e.target.result}')`; };
+                reader.onload = (e) => {
+                    document.getElementById('printable-card').style.backgroundImage = `url('${e.target.result}')`;
+                    saveCurrentState();
+                };
                 reader.readAsDataURL(file);
             }
         }
