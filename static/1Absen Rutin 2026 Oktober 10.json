@@ -1,0 +1,44 @@
+{
+  "box-header": {
+    "left": "9.98959px",
+    "top": "5.96875px",
+    "width": "278px",
+    "height": "113px",
+    "fontSizes": [
+      "12px",
+      "12px",
+      "12px"
+    ]
+  },
+  "box-station": {
+    "left": "384.656px",
+    "top": "205.99px",
+    "width": "313px",
+    "height": "237px",
+    "fontSizes": [
+      "20px",
+      "20px",
+      "20px",
+      "20px"
+    ]
+  },
+  "box-qso": {
+    "left": "8.21872px",
+    "top": "211.302px",
+    "width": "369px",
+    "height": "132px",
+    "fontSizes": [
+      "16px"
+    ]
+  },
+  "box-footer": {
+    "left": "4px",
+    "top": "405.333px",
+    "width": "196px",
+    "height": "28px",
+    "fontSizes": [
+      "12px",
+      "12px"
+    ]
+  }
+}

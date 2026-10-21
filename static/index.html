@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QSL Card Generator Pro - RAPI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;600;700&display=swap');
+        .font-mono-custom { font-family: 'Share Tech Mono', monospace; }
+        .qsl-card {
+            width: 100%;
+            max-width: 750px;
+            aspect-ratio: 3 / 2;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        /* Kotak bisa digeser & diubah ukurannya secara bebas */
+        .draggable-box {
+            position: absolute;
+            user-select: none;
+            resize: both;
+            overflow: hidden;
+            min-width: 180px;
+            min-height: 80px;
+            border: 2px dashed rgba(245, 158, 11, 0.4);
+            background-color: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem 1.25rem 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+        .draggable-box::-webkit-resizer {
+            background-color: #f59e0b;
+            border-radius: 4px;
+            width: 18px;
+            height: 18px;
+        }
+        @media print {
+            body * { visibility: hidden; }
+            #printable-card, #printable-card * { visibility: visible; }
+            #printable-card { position: absolute; left: 0; top: 0; width: 100%; border: none !important; box-shadow: none !important; }
+            .no-print { display: none !important; }
+            .draggable-box { border: none !important; background: transparent !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="w-full max-w-6xl mx-auto space-y-6">
+        
+        <!-- Panel Kontrol Utama Atas -->
+        <div class="bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800 no-print">
+            <h2 class="text-xl font-bold text-amber-400 mb-4 flex items-center gap-2">
+                📡 Pengaturan Data QSL Card RAPI
+            </h2>
+
+            <!-- Baris Input Utama -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Callsign Lawan</label>
+                    <input type="text" id="targetCallsign" placeholder="JZ10IXM" value="JZ10IXM" oninput="saveCurrentState()"
+                           class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Frekuensi QSO</label>
+                    <input type="text" id="freqInput" placeholder="143.040" value="143.040" oninput="updateFreqText(); saveCurrentState();"
+                           class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">RST (Signal)</label>
+                    <input type="text" id="rstReport" value="59" oninput="saveCurrentState()"
+                           class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">NCS (Net Control)</label>
+                    <input type="text" id="ncsInput" placeholder="JZ10IXM" value="JZ10IXM" oninput="saveCurrentState()"
+                           class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Nama Event</label>
+                    <input type="text" id="eventInput" placeholder="Special Call" value="Rutin / Net Lokal" oninput="updateEventText(); saveCurrentState();"
+                           class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
+                </div>
+            </div>
+
+            <!-- Input Waktu & Tanggal Lokal -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Tanggal QSO (Waktu Lokal PC)</label>
+                    <input type="date" id="dateInput" onchange="updateDateTime(); saveCurrentState();" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1 text-white text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Waktu QSO (WIB / UTC+7)</label>
+                    <input type="text" id="timeInput" onchange="updateDateTime(); saveCurrentState();" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1 text-white text-sm">
+                </div>
+            </div>
+
+            <!-- Tombol Aksi Utama -->
+            <div class="flex flex-wrap gap-3 mb-2 items-center">
+                <button onclick="cariDataRAPI()" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 px-5 rounded-lg transition shadow-md text-sm">
+                    Cari Data & Update Kartu
+                </button>
+                <button onclick="downloadLayoutFile()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded-lg transition shadow-md text-xs">
+                    💾 Simpan Tata Letak (.json)
+                </button>
+                <label class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg transition shadow-md text-xs cursor-pointer">
+                    📂 Muat Tata Letak
+                    <input type="file" accept=".json" onchange="uploadLayoutFile(event)" class="hidden">
+                </label>
+                <button onclick="downloadCardImage()" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 px-4 rounded-lg transition shadow-md text-xs ml-auto">
+                    🖼️ Unduh Gambar (PNG Terang)
+                </button>
+            </div>
+
+            <hr class="border-slate-800 my-4">
+
+            <!-- Panel Upload Database & Background -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm items-end">
+                <div>
+                    <label class="block font-medium text-slate-300 mb-1 text-xs">Upload / Update Database (CSV/JSON)</label>
+                    <input type="file" id="dbFileUpload" accept=".csv, .json" onchange="loadCustomDatabase(event)"
+                           class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-300 file:mr-1 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500">
+                </div>
+                <div>
+                    <button onclick="resetDatabase()" class="w-full bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-semibold py-2 px-3 rounded-lg transition shadow">
+                        🔄 Reset Database Tersimpan
+                    </button>
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-300 mb-1 text-xs">Upload Gambar Latar Kartu</label>
+                    <input type="file" id="bgImageUpload" accept="image/*" onchange="previewCardBackground(event)"
+                           class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-300 file:mr-1 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber-600 file:text-white hover:file:bg-amber-500">
+                </div>
+                <div>
+                    <label class="block font-medium text-slate-300 mb-1 text-xs">Upload Foto / Stiker</label>
+                    <input type="file" id="imageUpload" accept="image/*" onchange="previewImage(event)"
+                           class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-300 file:mr-1 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber-600 file:text-white hover:file:bg-amber-500">
+                </div>
+            </div>
+            <p id="statusInfo" class="text-xs text-slate-400 mt-3">*Database aktif dan tersimpan permanen di browser Anda.</p>
+        </div>
+
+        <!-- Layout Utama: Area Desain di Kiri & Panel Kontrol Tampilan di Kanan -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+            
+            <!-- Area Preview / QSL Card (Mengisi 3 Kolom) -->
+            <div class="lg:col-span-3 flex justify-center">
+                <div id="printable-card" class="qsl-card bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 border-4 border-amber-500 rounded-2xl p-4 shadow-2xl overflow-hidden" style="background-color: #0f172a;">
+                    
+                    <div id="cardOverlay" class="absolute inset-0 bg-slate-950/20 pointer-events-none -z-10"></div>
+                    <div class="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
+                        <span class="text-9xl font-extrabold font-mono-custom">RAPI</span>
+                    </div>
+
+                    <!-- 1. Header -->
+                    <div id="box-header" class="draggable-box top-4 left-4 flex justify-between items-center border-b border-amber-500/40 pb-2 z-20">
+                        <div class="flex items-center gap-2 w-full">
+                            <img src="{{ url_for('static', filename='logo_rapi.png') }}" alt="Logo" class="h-9 w-9 object-contain bg-white/10 p-1 rounded border border-amber-500/30">
+                            <div>
+                                <div id="displayFreqHeader" class="text-amber-400 font-bold box-text" data-base="11">RAPI 143.040 MHz</div>
+                                <h1 class="font-extrabold text-white font-mono-custom box-text" data-base="18">QSL CARD</h1>
+                                <div id="displayEvent" class="text-amber-200 italic box-text" data-base="10">Event: Rutin / Net Lokal</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Kotak Stasiun -->
+                    <div id="box-station" class="draggable-box top-28 left-4 z-20 shadow-lg">
+                        <div class="text-slate-400 uppercase tracking-wider mb-1 box-text" data-base="10">CONFIRMING QSO WITH</div>
+                        <div id="displayCallsign" class="font-bold text-amber-400 font-mono-custom box-text" data-base="22">JZ10IXM</div>
+                        <div id="displayName" class="font-semibold text-white mt-0.5 box-text" data-base="15">DIAN HERMAWAN</div>
+                        <div id="displayAddress" class="text-slate-300 mt-0.5 leading-tight box-text" data-base="12">Kabupaten Ciamis, Jawa Barat</div>
+                    </div>
+
+                    <!-- 3. Kotak QSO -->
+                    <div id="box-qso" class="draggable-box top-28 right-4 z-20 shadow-lg">
+                        <div class="grid grid-cols-2 gap-1 font-mono-custom box-text" data-base="12">
+                            <div><span class="text-slate-400">FREQ:</span> <strong id="displayFreqBox" class="text-amber-300">143.040</strong></div>
+                            <div><span class="text-slate-400">RST:</span> <strong id="displayRst" class="text-white">59</strong></div>
+                            <div><span class="text-slate-400">DATE:</span> <strong id="displayDate" class="text-white">-</strong></div>
+                            <div><span class="text-slate-400">TIME:</span> <strong id="displayTime" class="text-white">-</strong></div>
+                            <div class="col-span-2 pt-1 border-t border-slate-800">
+                                <span class="text-slate-400">NCS:</span> <strong id="displayNcs" class="text-amber-300">JZ10IXM</strong>
+                            </div>
+                        </div>
+                        <div id="imagePreviewContainer" class="mt-2 hidden">
+                            <img id="userUploadedImage" src="" alt="Custom" class="h-10 w-full object-cover rounded border border-amber-500/40">
+                        </div>
+                    </div>
+
+                    <!-- 4. Footer -->
+                    <div id="box-footer" class="draggable-box bottom-3 left-4 flex justify-between items-end border-t border-slate-700/60 pt-1 z-20">
+                        <div>
+                            <span class="text-slate-400 box-text" data-base="10">Dibuat Oleh :</span>
+                            <div class="text-white font-bold font-mono-custom box-text" data-base="13">JZ10IXM - DIAN HERMAWAN</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Panel Pengaturan Tampilan & Reset di Pinggir Desain (1 Kolom) -->
+            <div class="bg-slate-900 p-4 rounded-2xl shadow-xl border border-slate-800 no-print space-y-4">
+                <h3 class="text-sm font-bold text-amber-400 border-b border-slate-800 pb-2">🎛️ Kontrol Tampilan Kotak</h3>
+                
+                <!-- Pengatur Transparansi -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">👻 Transparansi Kolom</label>
+                    <input type="range" id="opacityRange" min="0.0" max="1.0" step="0.05" value="0.85" oninput="changeBoxOpacity(this.value)" class="w-full accent-amber-500 cursor-pointer">
+                    <div class="flex justify-between text-[10px] text-slate-400 mt-0.5">
+                        <span>Transparan</span>
+                        <span id="opacityValue" class="font-mono text-amber-400 font-bold">85%</span>
+                        <span>Pekat</span>
+                    </div>
+                </div>
+
+                <hr class="border-slate-800">
+
+                <!-- Pengatur Ukuran Huruf Manual -->
+                <div class="space-y-2">
+                    <label class="block text-xs font-medium text-slate-300">🔠 Ukuran Huruf Kolom</label>
+                    <select id="targetBoxSelect" class="w-full bg-slate-950 border border-slate-700 text-white rounded px-2 py-1.5 text-xs">
+                        <option value="box-header">1. Header</option>
+                        <option value="box-station">2. Stasiun Tujuan</option>
+                        <option value="box-qso">3. Detail QSO</option>
+                        <option value="box-footer">4. Footer / Pembuat</option>
+                    </select>
+                    <div class="grid grid-cols-3 gap-1 pt-1">
+                        <button onclick="adjustFontSize(1)" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-1.5 rounded text-xs transition">A (+)</button>
+                        <button onclick="adjustFontSize(-1)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-1.5 rounded text-xs transition">A (-)</button>
+                        <button onclick="resetFontSize()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-1.5 rounded text-xs transition">Reset</button>
+                    </div>
+                </div>
+
+                <hr class="border-slate-800">
+
+                <!-- Tombol Reset Pengaturan Tata Letak -->
+                <div>
+                    <button onclick="resetLayoutSettings()" class="w-full bg-rose-600/80 hover:bg-rose-600 text-white font-semibold py-2 px-3 rounded-lg transition shadow text-xs flex items-center justify-center gap-1.5">
+                        🔄 Reset Posisi & Tampilan
+                    </button>
+                    <p class="text-[10px] text-slate-400 mt-1 text-center">Mengembalikan posisi kotak & huruf ke default.</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Panel Log Data QSO ke Excel / CSV -->
+        <div class="bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800 no-print mt-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-amber-400">📋 Log Data QSO (Riwayat Kontak)</h3>
+                <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-2 px-4 rounded-lg transition shadow">
+                    📥 Ekspor Log ke Excel (CSV)
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300 border-collapse">
+                    <thead>
+                        <tr class="bg-slate-800 text-amber-300 border-b border-slate-700">
+                            <th class="p-2">Tanggal</th>
+                            <th class="p-2">Waktu</th>
+                            <th class="p-2">Callsign</th>
+                            <th class="p-2">Frekuensi</th>
+                            <th class="p-2">Nama</th>
+                            <th class="p-2">Alamat</th>
+                            <th class="p-2">RST</th>
+                            <th class="p-2">NCS</th>
+                            <th class="p-2">Event</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logTableBody">
+                        <tr>
+                            <td colspan="9" class="p-3 text-center text-slate-500">Belum ada data QSO tercatat.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Set Waktu Lokal PC / WIB / UTC+7 secara Otomatis
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const defaultDate = `${year}-${month}-${day}`;
+        
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const defaultTime = `${hours}:${minutes}:${seconds} WIB`;
+
+        if (!localStorage.getItem('savedDate')) {
+            document.getElementById('dateInput').value = defaultDate;
+            document.getElementById('timeInput').value = defaultTime;
+        }
+
+        // Update Teks Frekuensi secara Real-Time
+        function updateFreqText() {
+            const freq = document.getElementById('freqInput').value.trim() || "143.040";
+            document.getElementById('displayFreqHeader').innerText = `RAPI ${freq} MHz`;
+            document.getElementById('displayFreqBox').innerText = freq;
+        }
+
+        // Fungsi Mengatur Transparansi Kolom secara Langsung
+        function changeBoxOpacity(val) {
+            document.querySelectorAll('.draggable-box').forEach(box => {
+                box.style.backgroundColor = `rgba(15, 23, 42, ${val})`;
+            });
+            document.getElementById('opacityValue').innerText = Math.round(val * 100) + '%';
+            saveCurrentState();
+        }
+
+        // Reset Pengaturan Posisi & Ukuran Huruf (Layout Default)
+        function resetLayoutSettings() {
+            if (confirm("Reset posisi kotak dan ukuran huruf kembali ke awal?")) {
+                localStorage.removeItem('qslCardActiveState');
+                location.reload();
+            }
+        }
+
+        // Muat State Terakhir (Persistent State saat Refresh)
+        function loadSavedState() {
+            const savedState = JSON.parse(localStorage.getItem('qslCardActiveState') || '{}');
+            if (savedState.targetCallsign) document.getElementById('targetCallsign').value = savedState.targetCallsign;
+            if (savedState.freqInput) document.getElementById('freqInput').value = savedState.freqInput;
+            if (savedState.rstReport) document.getElementById('rstReport').value = savedState.rstReport;
+            if (savedState.ncsInput) document.getElementById('ncsInput').value = savedState.ncsInput;
+            if (savedState.eventInput) document.getElementById('eventInput').value = savedState.eventInput;
+            if (savedState.dateInput) document.getElementById('dateInput').value = savedState.dateInput;
+            if (savedState.timeInput) document.getElementById('timeInput').value = savedState.timeInput;
+            
+            if (savedState.opacityVal !== undefined) {
+                document.getElementById('opacityRange').value = savedState.opacityVal;
+                changeBoxOpacity(savedState.opacityVal);
+            }
+
+            if (savedState.displayCallsign) document.getElementById('displayCallsign').innerText = savedState.displayCallsign;
+            if (savedState.displayName) document.getElementById('displayName').innerText = savedState.displayName;
+            if (savedState.displayAddress) document.getElementById('displayAddress').innerText = savedState.displayAddress;
+
+            updateDateTime();
+            updateEventText();
+            updateFreqText();
+
+            if (savedState.layout) {
+                Object.keys(savedState.layout).forEach(id => {
+                    const box = document.getElementById(id);
+                    if (box && savedState.layout[id]) {
+                        if (savedState.layout[id].left) box.style.left = savedState.layout[id].left;
+                        if (savedState.layout[id].top) box.style.top = savedState.layout[id].top;
+                        if (savedState.layout[id].width) box.style.width = savedState.layout[id].width;
+                        if (savedState.layout[id].height) box.style.height = savedState.layout[id].height;
+                        
+                        if (savedState.layout[id].fontSizes) {
+                            const texts = box.querySelectorAll('.box-text');
+                            texts.forEach((el, index) => {
+                                if (savedState.layout[id].fontSizes[index]) {
+                                    el.style.fontSize = savedState.layout[id].fontSizes[index];
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }
+
+        function saveCurrentState() {
+            const layout = {};
+            document.querySelectorAll('.draggable-box').forEach(box => {
+                const fontSizes = [];
+                box.querySelectorAll('.box-text').forEach(el => {
+                    fontSizes.push(el.style.fontSize || `${el.getAttribute('data-base')}px`);
+                });
+                layout[box.id] = { 
+                    left: box.style.left, 
+                    top: box.style.top, 
+                    width: box.style.width, 
+                    height: box.style.height,
+                    fontSizes: fontSizes
+                };
+            });
+            const state = {
+                targetCallsign: document.getElementById('targetCallsign').value,
+                freqInput: document.getElementById('freqInput').value,
+                rstReport: document.getElementById('rstReport').value,
+                ncsInput: document.getElementById('ncsInput').value,
+                eventInput: document.getElementById('eventInput').value,
+                dateInput: document.getElementById('dateInput').value,
+                timeInput: document.getElementById('timeInput').value,
+                opacityVal: document.getElementById('opacityRange').value,
+                displayCallsign: document.getElementById('displayCallsign').innerText,
+                displayName: document.getElementById('displayName').innerText,
+                displayAddress: document.getElementById('displayAddress').innerText,
+                layout: layout
+            };
+            localStorage.setItem('qslCardActiveState', JSON.stringify(state));
+        }
+
+        function updateDateTime() {
+            document.getElementById('displayDate').innerText = document.getElementById('dateInput').value;
+            document.getElementById('displayTime').innerText = document.getElementById('timeInput').value;
+        }
+
+        function updateEventText() {
+            const eventVal = document.getElementById('eventInput').value;
+            document.getElementById('displayEvent').innerText = `Event: ${eventVal}`;
+        }
+
+        // Kontrol Manual Ukuran Huruf (+) / (-) / Reset
+        function adjustFontSize(change) {
+            const boxId = document.getElementById('targetBoxSelect').value;
+            const box = document.getElementById(boxId);
+            if (!box) return;
+
+            box.querySelectorAll('.box-text').forEach(el => {
+                let currentSize = parseFloat(window.getComputedStyle(el).fontSize);
+                el.style.fontSize = `${Math.max(8, currentSize + (change * 2))}px`;
+            });
+            saveCurrentState();
+        }
+
+        function resetFontSize() {
+            const boxId = document.getElementById('targetBoxSelect').value;
+            const box = document.getElementById(boxId);
+            if (!box) return;
+
+            box.querySelectorAll('.box-text').forEach(el => {
+                const baseSize = el.getAttribute('data-base');
+                el.style.fontSize = `${baseSize}px`;
+            });
+            saveCurrentState();
+        }
+
+        // Database Penyimpanan Lokal & Update Data Baru
+        let customDatabase = JSON.parse(localStorage.getItem('rapiCustomDB') || '{}');
+        if (Object.keys(customDatabase).length > 0) {
+            document.getElementById('statusInfo').innerText = `Database aktif: Memuat ${Object.keys(customDatabase).length} data tersimpan di browser.`;
+        }
+
+        function loadCustomDatabase(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                let newEntries = 0;
+                let updatedEntries = 0;
+                if (file.name.endsWith('.json')) {
+                    try { 
+                        const parsed = JSON.parse(content);
+                        Object.keys(parsed).forEach(cs => {
+                            const upperCs = cs.trim().toUpperCase();
+                            if (customDatabase[upperCs]) updatedEntries++;
+                            else newEntries++;
+                            customDatabase[upperCs] = parsed[cs];
+                        });
+                    } catch(err) { alert("Format JSON salah!"); return; }
+                } else if (file.name.endsWith('.csv')) {
+                    content.split('\n').forEach(line => {
+                        const parts = line.split(',');
+                        if (parts.length >= 3) {
+                            const cs = parts[0].trim().toUpperCase();
+                            if (customDatabase[cs]) updatedEntries++;
+                            else newEntries++;
+                            customDatabase[cs] = { name: parts[1].trim().toUpperCase(), address: parts[2].trim() };
+                        }
+                    });
+                }
+                localStorage.setItem('rapiCustomDB', JSON.stringify(customDatabase));
+                alert(`Database diperbarui!\n- Data Baru: ${newEntries}\n- Data Diupdate: ${updatedEntries}`);
+                document.getElementById('statusInfo').innerText = `Database aktif: Total ${Object.keys(customDatabase).length} data tersimpan.`;
+            };
+            reader.readAsText(file);
+        }
+
+        function resetDatabase() {
+            if (confirm("Apakah Anda yakin ingin menghapus seluruh database tersimpan?")) {
+                localStorage.removeItem('rapiCustomDB');
+                customDatabase = {};
+                alert("Database berhasil direset!");
+                document.getElementById('statusInfo').innerText = "Database kosong.";
+            }
+        }
+
+        // Sistem Seret (Drag & Drop) Mulus
+        document.querySelectorAll('.draggable-box').forEach(box => {
+            let isDragging = false, startX, startY, initialX, initialY;
+
+            box.addEventListener('pointerdown', (e) => {
+                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.tagName === 'IMG') return;
+                isDragging = true;
+                startX = e.clientX; startY = e.clientY;
+                const rect = box.getBoundingClientRect();
+                const parentRect = box.parentElement.getBoundingClientRect();
+                initialX = rect.left - parentRect.left;
+                initialY = rect.top - parentRect.top;
+                box.setPointerCapture(e.pointerId);
+            });
+
+            box.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+                box.style.left = `${initialX + (e.clientX - startX)}px`;
+                box.style.top = `${initialY + (e.clientY - startY)}px`;
+                box.style.right = 'auto'; box.style.bottom = 'auto';
+            });
+
+            box.addEventListener('pointerup', (e) => {
+                isDragging = false;
+                if (box.hasPointerCapture(e.pointerId)) box.releasePointerCapture(e.pointerId);
+                saveCurrentState();
+            });
+        });
+
+        // Simpan & Muat Tata Letak Konfigurasi (.json)
+        function downloadLayoutFile() {
+            const states = {};
+            document.querySelectorAll('.draggable-box').forEach(box => {
+                const fontSizes = [];
+                box.querySelectorAll('.box-text').forEach(el => fontSizes.push(el.style.fontSize));
+                states[box.id] = { left: box.style.left, top: box.style.top, width: box.style.width, height: box.style.height, fontSizes: fontSizes };
+            });
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(states, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "qsl_layout_config.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function uploadLayoutFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const states = JSON.parse(e.target.result);
+                    Object.keys(states).forEach(id => {
+                        const box = document.getElementById(id);
+                        if (box && states[id]) {
+                            if (states[id].left) box.style.left = states[id].left;
+                            if (states[id].top) box.style.top = states[id].top;
+                            if (states[id].width) box.style.width = states[id].width;
+                            if (states[id].height) box.style.height = states[id].height;
+                            if (states[id].fontSizes) {
+                                const texts = box.querySelectorAll('.box-text');
+                                texts.forEach((el, index) => {
+                                    if (states[id].fontSizes[index]) el.style.fontSize = states[id].fontSizes[index];
+                                });
+                            }
+                        }
+                    });
+                    saveCurrentState();
+                    alert("Tata letak berhasil dimuat!");
+                } catch(err) { alert("File konfigurasi tidak valid!"); }
+            };
+            reader.readAsText(file);
+        }
+
+        // Unduh Hasil Gambar PNG Terang Tanpa Terpotong
+        function downloadCardImage() {
+            const cardElement = document.getElementById('printable-card');
+            html2canvas(cardElement, { scale: 3, useCORS: true, backgroundColor: "#0f172a" }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `QSL_Card_${document.getElementById('displayCallsign').innerText}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+
+        // Background & Image Upload
+        function previewCardBackground(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => { document.getElementById('printable-card').style.backgroundImage = `url('${e.target.result}')`; };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('userUploadedImage').src = e.target.result;
+                    document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        let qsoLogs = [];
+
+        // Cari Data Callsign & Catat ke Log Excel
+        async function cariDataRAPI() {
+            const callsign = document.getElementById('targetCallsign').value.trim().toUpperCase();
+            const freq = document.getElementById('freqInput').value.trim() || "143.040";
+            const rst = document.getElementById('rstReport').value.trim();
+            const ncs = document.getElementById('ncsInput').value.trim().toUpperCase();
+            const eventName = document.getElementById('eventInput').value.trim();
+            const dateVal = document.getElementById('dateInput').value;
+            const timeVal = document.getElementById('timeInput').value;
+            const statusInfo = document.getElementById('statusInfo');
+
+            if (!callsign) { alert("Masukkan Callsign terlebih dahulu!"); return; }
+
+            document.getElementById('displayRst').innerText = rst || "59";
+            document.getElementById('displayNcs').innerText = ncs || "-";
+            updateFreqText();
+
+            let name = "", address = "", source = "";
+
+            if (customDatabase[callsign]) {
+                name = customDatabase[callsign].name;
+                address = customDatabase[callsign].address;
+                source = "Database Tersimpan";
+            } else {
+                try {
+                    let response = await fetch('/api/search-callsign', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ callsign: callsign })
+                    });
+                    let result = await response.json();
+                    name = result.name; address = result.address; source = result.source;
+                } catch (e) {
+                    name = `ANGGOTA (${callsign})`; address = "Indonesia"; source = "Offline";
+                }
+            }
+
+            document.getElementById('displayCallsign').innerText = callsign;
+            document.getElementById('displayName').innerText = name;
+            document.getElementById('displayAddress').innerText = address;
+            statusInfo.innerText = `Data dimuat dari (${source})`;
+            statusInfo.className = "text-xs text-emerald-400 mt-3";
+
+            qsoLogs.push({ date: dateVal, time: timeVal, callsign, freq, name, address, rst: rst || "59", ncs: ncs || "-", event: eventName });
+            updateLogTable();
+            saveCurrentState();
+        }
+
+        function updateLogTable() {
+            const tbody = document.getElementById('logTableBody');
+            tbody.innerHTML = "";
+            qsoLogs.forEach(log => {
+                tbody.innerHTML += `<tr class="border-b border-slate-800 hover:bg-slate-800/50">
+                    <td class="p-2">${log.date}</td><td class="p-2">${log.time}</td><td class="p-2 font-bold text-amber-400">${log.callsign}</td>
+                    <td class="p-2 font-mono text-amber-300">${log.freq} MHz</td><td class="p-2">${log.name}</td><td class="p-2">${log.address}</td>
+                    <td class="p-2">${log.rst}</td><td class="p-2">${log.ncs}</td><td class="p-2 italic">${log.event}</td>
+                </tr>`;
+            });
+        }
+
+        function exportToExcel() {
+            if (qsoLogs.length === 0) { alert("Belum ada data log untuk diekspor!"); return; }
+            let csvContent = "data:text/csv;charset=utf-8,Tanggal,Waktu,Callsign,Frekuensi,Nama,Alamat,RST,NCS,Event\n";
+            qsoLogs.forEach(row => {
+                csvContent += `${row.date},${row.time},${row.callsign},${row.freq},"${row.name}","${row.address}",${row.rst},${row.ncs},"${row.event}"\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Log_QSO_RAPI_${defaultDate}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        // Jalankan saat halaman selesai dimuat
+        window.onload = function() {
+            loadSavedState();
+        };
+    </script>
+</body>
+</html>
