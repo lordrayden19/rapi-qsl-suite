@@ -84,7 +84,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">Callsign Lawan</label>
-                        <input type="text" id="targetCallsign" placeholder="JZ10CAI" value="JZ10CAI" oninput="saveCurrentState()"
+                        <input type="text" id="targetCallsign" placeholder="JZ10IXM" value="JZ10IXM" oninput="saveCurrentState()"
                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                     </div>
                     <div>
@@ -150,7 +150,7 @@
                 <!-- Upload Database & Background -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-sm items-end">
                     <div>
-                        <label class="block font-medium text-slate-300 mb-1 text-xs">Upload Tambahan Database (CSV/JSON)</label>
+                        <label class="block font-medium text-slate-300 mb-1 text-xs">Upload Tambahan Database (Opsional)</label>
                         <input type="file" id="dbFileUpload" accept=".csv, .json" onchange="loadCustomDatabase(event)"
                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-300 file:mr-1 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white">
                     </div>
@@ -170,7 +170,7 @@
                         </button>
                     </div>
                 </div>
-                <p id="statusInfo" class="text-xs text-emerald-400 mt-2">✓ Database Bawaan Lokal 07 Wilayah 16 Ciamis Aktif (Tersedia opsi tambah database eksternal).</p>
+                <p id="statusInfo" class="text-xs text-slate-400 mt-2">*Database bawaan aktif terintegrasi di aplikasi.</p>
             </div>
 
             <!-- Layout Utama: Area Desain & Panel Kontrol Tampilan -->
@@ -200,9 +200,9 @@
                         <!-- 2. Kotak Stasiun -->
                         <div id="box-station" class="draggable-box top-24 left-3 z-20 shadow-lg">
                             <div class="text-sky-300 uppercase tracking-wider mb-0.5 box-text text-[10px] md:text-xs" data-base="10">CONFIRMING QSO WITH</div>
-                            <div id="displayCallsign" class="font-bold text-amber-300 font-mono-custom box-text text-base md:text-xl" data-base="22">JZ10CAI</div>
-                            <div id="displayName" class="font-semibold text-white mt-0.5 box-text text-xs md:text-sm" data-base="15">AGUS SYARIFUDIN</div>
-                            <div id="displayAddress" class="text-slate-200 mt-0.5 leading-tight box-text text-[10px] md:text-xs" data-base="12">Dusun. Sodong RT. 004/014 Desa Bojongmengger Kec. Cijeungjing</div>
+                            <div id="displayCallsign" class="font-bold text-amber-300 font-mono-custom box-text text-base md:text-xl" data-base="22">JZ10IXM</div>
+                            <div id="displayName" class="font-semibold text-white mt-0.5 box-text text-xs md:text-sm" data-base="15">DIAN HERMAWAN</div>
+                            <div id="displayAddress" class="text-slate-200 mt-0.5 leading-tight box-text text-[10px] md:text-xs" data-base="12">Kabupaten Ciamis, Jawa Barat</div>
                         </div>
 
                         <!-- 3. Kotak QSO -->
@@ -236,7 +236,7 @@
                 <div class="bg-slate-900 p-4 rounded-2xl shadow-xl border border-slate-800 no-print space-y-3">
                     <h3 class="text-xs md:text-sm font-bold text-amber-400 border-b border-slate-800 pb-2">🎛️ Kontrol Tampilan & Latar</h3>
                     
-                    <!-- Pengaturan Penyesuaian Latar Belakang -->
+                    <!-- Pengaturan Penyesuaian Latar Belakang Tingkat Lanjut -->
                     <div class="space-y-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
                         <label class="block text-xs font-bold text-amber-300">🖼️ Pengaturan Gambar Latar</label>
                         
@@ -404,98 +404,118 @@
     </div>
 
     <script>
-        // Database Bawaan Lokal 07 Wilayah 16 Ciamis
-        const embeddedDatabase = {
-            "JZ10CAI": { "name": "AGUS SYARIFUDIN", "address": "Dusun. Sodong RT. 004/014 Desa Bojongmengger Kec. Cijeungjing" },
-            "JZ10CAO": { "name": "OTONG JUANDA", "address": "Dusun. Kaler RT. 006/002 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CAQ": { "name": "CECENG SHOHIK MUBAROK", "address": "Dusun.Kandanggajah RT. 001/011 Desa Dewasari Kec. Cijeungjing" },
-            "JZ10CBU": { "name": "ANDRI MUHAMAD OKTAVIANA", "address": "Dusun. Kandanggajah RT. 001/011 Desa Dewasari Kec. Cijeungjing" },
-            "JZ10CBY": { "name": "ENOB", "address": "Dusun. Sumurbandung RT. 018/006 Desa Karangjamulyan Kec. Cijeungjing" },
-            "JZ10CCA": { "name": "AGUN GUNAWAN", "address": "Dusun. Cidewa RT. 002/014 Desa Dewasari Kec. Cijeungjing" },
-            "JZ10CCE": { "name": "MAOSUL", "address": "Dusun. Babakan RT. 038/017 Desa Ciharalang Kec. Cijeungjing" },
-            "JZ10CCI": { "name": "YUSMAN.,S.IP", "address": "Dusun Desa RT. 008/003 Desa Handapherang Kec. Cijeungjing" },
-            "JZ10CDC": { "name": "KARIM KARSONO", "address": "Dusun. Cipeundeuy RT. 003/002 Desa Ciharalang Kec. Cijeungjing" },
-            "JZ10CDE": { "name": "DENI", "address": "Dusun. Sarayuda RT. 002/008  Desa Kertaharja Kec. Cijeungjing" },
-            "JZ10CDM": { "name": "HENDRI", "address": "Dusun Karanglayung RT. 003/004 Desa Bojongmengger Ke. Cijeungjing" },
-            "JZ10CDX": { "name": "YAYA SUNARYA", "address": "Dusun Cikawung RT. 007/018 Desa Bojongmengger Kec. Cijeungjing" },
-            "JZ10CEL": { "name": "TARYO ASSFIAN", "address": "Dusun. Kersikan RT. 31/12 Desa Handapherang Kec. Cijeungjjing" },
-            "JZ10CEZ": { "name": "DEDI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CFB": { "name": "TOTONG", "address": "Dsn. Karangkamulyan RT. 007/002 Desa Karangkamulyan Kec. Cijeungjing" },
-            "JZ10CFE": { "name": "DEDI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CFI": { "name": "DIDI MULYADI", "address": "Dusun. Kertasari RT. 021/007 Desa Dewasari Kec. Cijeungjing" },
-            "JZ10CFL": { "name": "H. YAYA MULYANA", "address": "Dusun. Bojong RT. 001/004 Desa Bojongmengger Kec. Cijeungjing" },
-            "JZ10CFR": { "name": "DODI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CFS": { "name": "MAMAN KHRISMAN", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CFT": { "name": "TOTO", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CFU": { "name": "SUPARMAN", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CFX": { "name": "ENDANG", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CGA": { "name": "NURHAYATI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CGF": { "name": "DEDI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CGH": { "name": "YOYO", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CGK": { "name": "WAWAN KURNIAWAN", "address": "Dusun. Kertasari RT. 021/007 Desa Dewasari Kec. Cijeungjing" },
-            "JZ10CGR": { "name": "JAJAT SUDRAJAT", "address": "Dusun. Bojongmengger RT. 001/001 Desa Bojongmengger Kec. Cijeungjing" },
-            "JZ10CGW": { "name": "YEYEN WAHYUDIN", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CHA": { "name": "YAYA", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CHL": { "name": "UUS KURNIASIH", "address": "Dusun. Cikadu RT. 002/015 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CIX": { "name": "ENDANG", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJB": { "name": "SUHENDAR", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJC": { "name": "WAHYU", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJD": { "name": "YADI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJE": { "name": "DEDE", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJF": { "name": "ADE", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJG": { "name": "UJANG", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJH": { "name": "SUTISNA", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJI": { "name": "CECEP", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJJ": { "name": "OTONG", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJK": { "name": "NANA", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJL": { "name": "DIDI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJM": { "name": "HERI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJN": { "name": "DEDEN", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJO": { "name": "YAYA", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJP": { "name": "YOYO", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJQ": { "name": "ENJANG", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJR": { "name": "SUPRIATNA", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJS": { "name": "OOS", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJT": { "name": "ENDAH", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJU": { "name": "NUNUNG", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJV": { "name": "TETI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJW": { "name": "LILIS", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJX": { "name": "SITI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJY": { "name": "DEWI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CJZ": { "name": "RINA", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKA": { "name": "TOTO SURANTO", "address": "Dusun. Cikadu RT. 002/015 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKB": { "name": "BUDI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKC": { "name": "JOKO", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKD": { "name": "EKO", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKE": { "name": "BAMBANG", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKF": { "name": "AGUS", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKG": { "name": "JAKA", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKH": { "name": "DANI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKI": { "name": "RUDI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKJ": { "name": "IWAN", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKK": { "name": "ASEP", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKL": { "name": "DICKY", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKM": { "name": "DONI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKN": { "name": "FADLI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKO": { "name": "GILANG", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKP": { "name": "HARRY", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKQ": { "name": "IRFAN", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKR": { "name": "KIKI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKS": { "name": "LUKMAN", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKT": { "name": "MUHAMAD", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKU": { "name": "NOVAL", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKV": { "name": "PANJI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKW": { "name": "QORI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKX": { "name": "RIKI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKY": { "name": "SANDI", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
-            "JZ10CKZ": { "name": "TAUFIK", "address": "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" }
-        };
-
         let userEditedTime = false;
         let timeInterval;
         let currentTZ = 'Asia/Jakarta';
         let currentZoneName = 'WIB';
         let qsoLogs = JSON.parse(localStorage.getItem('rapiQsoLogs') || '[]');
+
+        // DATABASE BAWAAN TERINTEGRASI LANGSUNG
+        const defaultDatabase = {
+            "JZ10CAI": { name: "AGUS SYARIFUDIN", address: "Dusun. Sodong RT. 004/014 Desa Bojongmengger Kec. Cijeungjing" },
+            "JZ10CAO": { name: "OTONG JUANDA", address: "Dusun. Kaler RT. 006/002 Desa Cijeungjing Kec. Cijeungjing" },
+            "JZ10CAQ": { name: "CECENG SHOHIK MUBAROK", address: "Dusun.Kandanggajah RT. 001/011 Desa Dewasari Kec. Cijeungjing" },
+            "JZ10CBU": { name: "ANDRI MUHAMAD OKTAVIANA", address: "Dusun. Kandanggajah RT. 001/011 Desa Dewasari Kec. Cijeungjing" },
+            "JZ10CBY": { name: "ENOB", address: "Dusun. Sumurbandung RT. 018/006 Desa Karangjamulyan Kec. Cijeungjing" },
+            "JZ10CCA": { name: "AGUN GUNAWAN", address: "Dusun. Cidewa RT. 002/014 Desa Dewasari Kec. Cijeungjing" },
+            "JZ10CCE": { name: "MAOSUL", address: "Dusun. Babakan RT. 038/017 Desa Ciharalang Kec. Cijeungjing" },
+            "JZ10CCI": { name: "YUSMAN. S.IP", address: "Cijeungjing, Ciamis" },
+            "JZ10CDC": { name: "KARIM KARSONO", address: "Dusun. Cipeundeuy RT. 003/002 Desa Ciharalang Kec. Cijeungjing" },
+            "JZ10CDE": { name: "DENI", address: "Dusun. Sarayuda RT. 002/008 Desa Kertaharja Kec. Cijeungjing" },
+            "JZ10CDM": { name: "HENDRI", address: "Dusun Karanglayung RT. 003/004 Desa Bojongmengger Ke. Cijeungjing" },
+            "JZ10CDX": { name: "YAYA SUNARYA", address: "Dusun Cikawung RT. 007/018 Desa Bojongmengger Kec. Cijeungjing" },
+            "JZ10CEL": { name: "TARYO ASSFIAN", address: "Dusun. Kersikan RT. 31/12 Desa Handapherang Kec. Cijeungjjing" },
+            "JZ10CEZ": { name: "DEDI", address: "Dusun. Karangpucung RT. 013/005 Desa Cijeungjing Kec. Cijeungjing" },
+            "JZ10CFB": { name: "TOTONG", address: "Dsn. Karangkamulyan RT. 007/002 Desa Karangkamulyan Kec. Cijeungjing" },
+            "JZ10CGA": { name: "ARIP BILAH", address: "Dusun. Sarayuda RT. 001/007 Desa Kertaharja Kec. Cijeungjing" },
+            "JZ10CGO": { name: "KUSNADI", address: "Dusun Pabrik RT. 015/007 Desa Ciharalang Kec. Cijeungjing" },
+            "JZ10CGP": { name: "ROHMAN ZENAL MUSTOPA. SP", address: "Cijeungjing, Ciamis" },
+            "JZ10CHG": { name: "NUNU RAMDANI", address: "Dusun. Sumurbandung Desa Karangkamulyan Kec. Cijeungjing" },
+            "JZ10CHY": { name: "DIDIN ROSIDIN", address: "Dusun Warungjati RT. 019/007 Desa Cijeungjing Kec. Cijeungjing" },
+            "JZ10CIV": { name: "ADANG SUHENDAR", address: "Dusun. Desa RT. 001/001 Desa Kertabumi Kec. Cijeungjing" },
+            "JZ10CIZ": { name: "UJU GUNAWAN M.Pd", address: "Cijeungjing, Ciamis" },
+            "JZ10CJA": { name: "ODES", address: "Dusun Cipeundeuy RT. 003/002 Desa Ciharalang Kec. Cijeungjing" },
+            "JZ10CKI": { name: "ABDULLOH", address: "Dudun Panyingkiran Rt.031/014 Desa Ciharalang Kec. Cijeungjing" },
+            "JZ10CKJ": { name: "RUKMANA", address: "Dusun Pabrik RT. 014/007 Desa Ciharalang Kec. Cijeungjing" },
+            "JZ10CLE": { name: "SOBAR", address: "Dusun Kandanggajah RT. 002/011 Desa Dewasari Kec. Cijeungjing" },
+            "JZ10CMV": { name: "ERO JAYASUHADA", address: "Dusun Citutut RT. 002/005 Desa Dewasari Kec. Cijeungjing" },
+            "JZ10CNM": { name: "NIA MARLIANA S.IP", address: "Cijeungjing, Ciamis" },
+            "JZ10CRR": { name: "YANTO AGUS SONJAYA", address: "Dusun. Kadugede RT. 035/016 Desa Karanganyar Kec. Cijeungjing" },
+            "JZ10CRV": { name: "ENDA RUHENDA", address: "Dusun. Kandanggajah RT. 006/013 Desa Dewasari Kec. Cijeungjing" },
+            "JZ10CUB": { name: "ENGKOS SUTISNA", address: "Dusun. Sodong RT. 001/004 Desa Bojongmengger Kec. Cijeungjing" },
+            "JZ10CXW": { name: "NURDIANA", address: "Dusun Cibeka RT. 013/004 Desa Karangkamulyan Kec. Cijeungjing" },
+            "JZ10CYI": { name: "YANTO ISKANDAR", address: "Dusun. Bunder RT. 009/004 Desa Kertabumi Kec. Cijeungjing" },
+            "JZ10CYY": { name: "YAYAN MULYANA", address: "Dusun Guha RT. 023/009 Desa Handapherang Kec. Cijeungjing" },
+            "JZ10CZC": { name: "IWAN", address: "Dusun Sodong RT. 004/014 Desa Bojongmengger Kec. Cijeungjing" },
+            "JZ10CZH": { name: "AGUS GUNAWAN", address: "Dusun Pasirgintung RT. 025 RW. 007 Desa Jayaraksa Kec. Cimaragas" },
+            "JZ10CZL": { name: "AGUS YULIADIE", address: "Dsn Sumur Bandung RT. 022/007 Ds. Karangkamulyan Kec. Cijeungjing" },
+            "JZ10CZQ": { name: "ATANG", address: "Dusun Bandaruka RT. 027/013 Desa Karanganyar Kec. Cijeungjing" },
+            "JZ10CZV": { name: "NANA SUPENA", address: "Dusun Sodong RT. 002/014 Desa Bojongmengger Kec. Cijeungjing" },
+            "JZ10CZX": { name: "DIAN ANTONO", address: "Jl. Ciamis Banjar RT. 014/005 Desa Cijeungjing Kec. Cijeungjing" },
+            "JZ10CZY": { name: "DIAN SANTIKA BUDIMAN", address: "Dusun Sumurbandung RT. 023/007 Desa Karangkamulyan Kec. Cijeungjing" },
+            "JZ10BQP": { name: "YANA HERYANA", address: "Dusun Sukamantri RT. 007/002 Desa Sukasari Kec. Cidolog" },
+            "JZ10BVZ": { name: "MUHLIS", address: "Dusun Bantarcaringin RT. 025/012 Desa Ciharalang Kec. Cijeungjing" },
+            "JZ10CXC": { name: "IRMAN HERMAWAN", address: "Dusun Bandaruka RT. 025/012 Desa Karanganyar Kec. Cijeungjing" },
+            "JZ10DSQ": { name: "SUWANDI", address: "Dusun Cikawung RT. 001/016 Desa Bojongmengger Kec. Cijeungjing" },
+            "JZ10ASB": { name: "DIKDIK SURYADI S.Pd", address: "Ciamis" },
+            "JZ10EHC": { name: "RINA RESTIANA", address: "Dusun Sodong RT. 004/014 Desa Bojongmengger Kec. Cijeungjing" },
+            "JZ10EHF": { name: "ALIMIN MIFTAH FARID", address: "Dusun Sodong RT. 004/014 Desa Bojongmengger Kec. Cijeungjing" },
+            "JZ10EVB": { name: "NANA", address: "Dusun Kidul RT. 009/004 Desa Cijeungjing Kec. Cijeungjing" },
+            "JZ10FEP": { name: "DEAN NATRIANA", address: "Dusun Pabrik RT. 015 RW. 007 Desa Ciharalang Kec. Cijeungjing" },
+            "JZ10FXI": { name: "MAMAN SULAEMAN", address: "Dusun Cipeundeuy RT. 002/001 Desa Ciharalang Kec. Cijeungjing" },
+            "JZ10HLJ": { name: "DEDE YANA HERDIANA", address: "Dusun Cilemor RT. 002/012 Desa Kertaharja Kec. Cijeungjing" },
+            "JZ10BDJ": { name: "SOLIHIN", address: "Dusun Cisihung RT. 006/007 Desa Bojongmengger Kec. Cijeungjing" },
+            "JZ10DBD": { name: "RIANTI ANGGRAENI", address: "Dusun Cimenger RT. 001/012 Desa Bojongmengger Kec. Cijeungjing" },
+            "JZ10ISI": { name: "ELAN SUHERLAN", address: "Dusun Bunder RT. 009/004 Desa Kertabumi Kec. Cijeungjing" },
+            "JZ10IXM": { name: "DIAN HERMAWAN", address: "Dusun Desa RT. 003/010 Desa Dewasari Kec. Cijeungjing" },
+            "JZ10IXN": { name: "CAHYADI HARI SURYANA", address: "Dusun Pabrik RT. 015 / 007 Desa Ciharalang Kec. Cijeungjing" },
+            "JZ10HUE": { name: "KURNAMAN", address: "Dusun Sukaresmi RT. 005 / 003 Desa Jelegong Kec. Cidolog" },
+            "JZ10CJI": { name: "HENDAR SUTISNA", address: "Dusun Desa RT. 007 / 003 Desa Handapherang Kec. Cijeungjing" },
+            "JZ10COT": { name: "NINDING BADRUL MUNIR", address: "Dusun Kandanggajah RT. 001 / 011 Desa Dewasari Kec. Cijeungjing" },
+            "JZ10EFA": { name: "SIHABUDIN S.HI", address: "Cidolog, Ciamis" },
+            "JZ10KNM": { name: "JONI", address: "Dusun Nagrog RT. 030 / 014 Desa Kertabumi Kec. Cijeungjing" },
+            "JZ10KSD": { name: "ADE NURMANDIA", address: "Dusun Desa RT. 001 / 001 Desa Kertaharja Kec. Cijeungjing" },
+            "JZ10LRZ": { name: "DARUS", address: "Dusun Sukamanah RT. 018 / 006 Desa Cidolog Kec. Cidolog" },
+            "JZ10KZI": { name: "OBES SUBAELI", address: "Dusun Citembong RT. 030 / 010 Desa Cidolog Kec. Cidolog" },
+            "JZ10LVY": { name: "ADANG KARTOBI", address: "Dusun. Cibeka RT. 027/ 008 Desa Karangkamulyan Kec. Cijeungjing" },
+            "JZ10LUT": { name: "CUCU SUDARTO", address: "Dusun Pasirgintung RT. 023 / 008 Desa Jayaraksa Kec. Cimaragas" },
+            "JZ10DTL": { name: "APRILIANI PUTRI SALSABILLA", address: "Dusun. Desa RT. 001/001 Desa Kertabumi Kec. Cijeungjing" },
+            "JZ10MAK": { name: "MAMAT", address: "Dusun Sukaresmi RT. 005 / 003 Desa Jelegong Kec. Cidolog" },
+            "JZ10MAW": { name: "RAMLAN", address: "Dusun Citembong RT. 030 / 010 Desa Cidolog Kec. Cidolog" },
+            "JZ10MMK": { name: "U. DEDI", address: "Dusun Pasirgintung RT. 026 / 007 Desa Jayaraksa Kec. Cimaragas" },
+            "CA RIZKY PRATAMA": { name: "RIZKY PRATAMA", address: "Kertabumi" },
+            "CA CICI NURYATI": { name: "CICI NURYATI", address: "Karanganyar" },
+            "CA DEDE DARLIA": { name: "DEDE DARLIA S.Pd.I", address: "Ciamis" },
+            "CA IBNU": { name: "IBNU", address: "Bojongmengger" },
+            "CA MAMAT SIGUNG": { name: "MAMAT SIGUNG", address: "Jelegong" },
+            "CA ENDANG RUHYANA": { name: "ENDANG RUHYANA", address: "Dewasari" },
+            "CA ZAMZAM": { name: "ZAMZAM", address: "Utama" },
+            "SIMPATISAN FARID": { name: "FARID", address: "Cidolog" },
+            "SIMPATISAN NASIMIN": { name: "NASIMIN", address: "Cidolog" },
+            "SIMPATISAN DANU": { name: "DANU", address: "Cidolog" },
+            "SIMPATISAN HAERUL ANWAR": { name: "HAERUL ANWAR", address: "Cidolog" },
+            "SIMPATISAN IWOK": { name: "IWOK", address: "Kertabumi" },
+            "SIMPATISAN LONGHEN": { name: "LONGHEN", address: "Kertabumi" },
+            "SIMPATISAN BUDI AMBULANCE": { name: "BUDI AMBULANCE", address: "Bojongmengger" },
+            "SIMPATISAN NENENG GONJRENG": { name: "NENENG GONJRENG", address: "Kertaharja" },
+            "SIMPATISAN KAKAY": { name: "KAKAY", address: "Kertabumi" },
+            "SIMPATISAN NIA": { name: "NIA", address: "Ciharalang" },
+            "SIMPATISAN DIDIN ROSIDIN": { name: "DIDIN ROSIDIN", address: "Dewasari" },
+            "SIMPATISAN YENI": { name: "YENI", address: "Bojongmengger" },
+            "SIMPATISAN USUP / UCEW": { name: "USUP / UCEW", address: "Cidolog" },
+            "SIMPATISAN ASEP MUSLIMIN / DUSENG": { name: "ASEP MUSLIMIN / DUSENG", address: "Jelegong" },
+            "SIMPATISAN KAMAL / OBOD": { name: "KAMAL / OBOD", address: "Jelegong" },
+            "SIMPATISAN NANANG": { name: "NANANG", address: "Jelegong" },
+            "SIMPATISAN IJANG / OPUR": { name: "IJANG / OPUR", address: "Jelegong" },
+            "SIMPATISAN ANAN / UCUY": { name: "ANAN / UCUY", address: "Cidolog" },
+            "SIMPATISAN DEDE EMUH": { name: "DEDE EMUH", address: "Cidolog" }
+        };
+
+        let customDatabase = JSON.parse(localStorage.getItem('rapiCustomDB') || '{}');
+        // Gabungkan database bawaan dengan database kustom pengguna (jika ada)
+        function getCombinedDatabase() {
+            return { ...defaultDatabase, ...customDatabase };
+        }
 
         function switchTab(tabName) {
             const genContent = document.getElementById('contentGenerator');
@@ -754,8 +774,6 @@
             saveCurrentState();
         }
 
-        let customDatabase = JSON.parse(localStorage.getItem('rapiCustomDB') || '{}');
-
         function loadCustomDatabase(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -782,7 +800,7 @@
                     });
                 }
                 localStorage.setItem('rapiCustomDB', JSON.stringify(customDatabase));
-                alert(`Database tambahan diperbarui! Berhasil memuat ${newEntries} data.`);
+                alert(`Database tambahan berhasil dimuat! Total entri baru: ${newEntries}`);
             };
             reader.readAsText(file);
         }
@@ -887,7 +905,8 @@
         }
 
         async function cariDataRAPI() {
-            const callsign = document.getElementById('targetCallsign').value.trim().toUpperCase();
+            const callsignInput = document.getElementById('targetCallsign').value.trim();
+            const callsign = callsignInput.toUpperCase();
             const freq = document.getElementById('freqInput').value.trim() || "143.040";
             const rst = document.getElementById('rstReport').value.trim();
             const ncs = document.getElementById('ncsInput').value.trim().toUpperCase();
@@ -903,37 +922,33 @@
             updateFreqText();
 
             let name = "", address = "", source = "";
+            const activeDB = getCombinedDatabase();
 
-            // Cek prioritas: Database tambahan -> Database Bawaan Embedded -> API/Online -> Fallback Offline
-            if (customDatabase[callsign]) {
-                name = customDatabase[callsign].name;
-                address = customDatabase[callsign].address;
-                source = "Database Tambahan (Upload)";
-            } else if (embeddedDatabase[callsign]) {
-                name = embeddedDatabase[callsign].name;
-                address = embeddedDatabase[callsign].address;
-                source = "Database Bawaan Lokal Ciamis";
+            if (activeDB[callsign]) {
+                name = activeDB[callsign].name;
+                address = activeDB[callsign].address;
+                source = "Database Terintegrasi";
             } else {
-                try {
-                    let response = await fetch('/api/search-callsign', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ callsign: callsign })
-                    });
-                    let result = await response.json();
-                    name = result.name; address = result.address; source = result.source;
-                } catch (e) {
-                    name = `ANGGOTA (${callsign})`; address = "Kabupaten Ciamis, Jawa Barat"; source = "Manual Offline";
+                // Pencarian parsial jika input berupa nama atau sebagian callsign
+                let foundKey = Object.keys(activeDB).find(k => k.includes(callsign) || activeDB[k].name.toUpperCase().includes(callsign));
+                if (foundKey) {
+                    name = activeDB[foundKey].name;
+                    address = activeDB[foundKey].address;
+                    source = "Pencarian Database";
+                } else {
+                    name = `ANGGOTA (${callsign})`;
+                    address = "Kabupaten Ciamis, Jawa Barat";
+                    source = "Manual / Offline";
                 }
             }
 
-            document.getElementById('displayCallsign').innerText = callsign;
+            document.getElementById('displayCallsign').innerText = callsignInput;
             document.getElementById('displayName').innerText = name;
             document.getElementById('displayAddress').innerText = address;
             statusInfo.innerText = `Data dimuat dari (${source}) dan dicatat ke log.`;
             statusInfo.className = "text-xs text-emerald-400 mt-2";
 
-            qsoLogs.push({ date: dateVal, time: timeVal, callsign, freq, name, address, rst: rst || "59", ncs: ncs || "-", event: eventName });
+            qsoLogs.push({ date: dateVal, time: timeVal, callsign: callsignInput, freq, name, address, rst: rst || "59", ncs: ncs || "-", event: eventName });
             localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
             updateLogTable();
             saveCurrentState();
@@ -947,7 +962,7 @@
             });
 
             if (filteredLogs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500">Belum ada data log tercatat.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500">Belum ada data log QSO.</td></tr>`;
                 return;
             }
 
@@ -969,6 +984,33 @@
                     </td>
                 </tr>`;
             });
+        }
+
+        function downloadLogCard(index) {
+            const log = qsoLogs[index];
+            if (!log) return;
+            document.getElementById('targetCallsign').value = log.callsign;
+            document.getElementById('freqInput').value = log.freq;
+            document.getElementById('rstReport').value = log.rst;
+            document.getElementById('ncsInput').value = log.ncs;
+            document.getElementById('eventInput').value = log.event;
+            document.getElementById('dateInput').value = log.date;
+            document.getElementById('timeInput').value = log.time;
+
+            document.getElementById('displayCallsign').innerText = log.callsign;
+            document.getElementById('displayName').innerText = log.name;
+            document.getElementById('displayAddress').innerText = log.address;
+            document.getElementById('displayRst').innerText = log.rst;
+            document.getElementById('displayNcs').innerText = log.ncs;
+            document.getElementById('displayFreqBox').innerText = log.freq;
+            document.getElementById('displayFreqHeader').innerText = `RAPI ${log.freq} MHz`;
+            document.getElementById('displayEvent').innerText = `Event: ${log.event}`;
+            document.getElementById('displayDate').innerText = log.date;
+            document.getElementById('displayTime').innerText = log.time;
+
+            setTimeout(() => {
+                downloadCardImage();
+            }, 100);
         }
 
         function deleteLogItem(index) {
