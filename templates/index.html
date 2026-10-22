@@ -31,6 +31,7 @@
             min-height: 70px;
             border: 2px dashed rgba(245, 158, 11, 0.4);
             background-color: rgba(30, 41, 59, 0.90);
+            /* Default Blur aktif */
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
             border-radius: 0.75rem;
@@ -236,10 +237,9 @@
                 <div class="bg-slate-900 p-4 rounded-2xl shadow-xl border border-slate-800 no-print space-y-3">
                     <h3 class="text-xs md:text-sm font-bold text-amber-400 border-b border-slate-800 pb-2">🎛️ Kontrol Tampilan & Latar</h3>
                     
-                    <!-- Pengaturan Penyesuaian Latar Belakang Tingkat Lanjut -->
+                    <!-- Pengaturan Penyesuaian Latar Belakang -->
                     <div class="space-y-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
                         <label class="block text-xs font-bold text-amber-300">🖼️ Pengaturan Gambar Latar</label>
-                        
                         <div>
                             <span class="text-[10px] text-slate-400 block mb-1">Mode Tampilan:</span>
                             <select id="bgSizeMode" onchange="updateBackgroundStyle()" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-2 py-1 text-xs">
@@ -248,7 +248,6 @@
                                 <option value="cover">Penuh / Zoom (Cover)</option>
                             </select>
                         </div>
-
                         <div>
                             <div class="flex justify-between text-[10px] text-slate-400 mb-1">
                                 <span>Skala Zoom Latar:</span>
@@ -272,6 +271,7 @@
 
                     <hr class="border-slate-800">
 
+                    <!-- Pengaturan Transparansi -->
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">👻 Transparansi Kotak Target</label>
                         <input type="range" id="opacityRange" min="0.0" max="1.0" step="0.05" value="0.90" oninput="changeBoxOpacity(this.value)" class="w-full accent-amber-500 cursor-pointer">
@@ -280,6 +280,15 @@
                             <span id="opacityValue" class="font-mono text-amber-400 font-bold">90%</span>
                             <span>Pekat</span>
                         </div>
+                    </div>
+
+                    <!-- Pengaturan Efek Blur / Tidak Blur -->
+                    <div class="space-y-1 pt-1">
+                        <label class="block text-xs font-medium text-slate-300">✨ Efek Blur Kotak Target</label>
+                        <select id="boxBlurSelect" onchange="changeBoxBlur(this.value)" class="w-full bg-slate-950 border border-slate-700 text-white rounded px-2 py-1.5 text-xs">
+                            <option value="blur(4px)">Aktif (Blur Kaca)</option>
+                            <option value="none">Non-Aktif (Tidak Blur / Solid)</option>
+                        </select>
                     </div>
 
                     <hr class="border-slate-800">
@@ -410,7 +419,6 @@
         let currentZoneName = 'WIB';
         let qsoLogs = JSON.parse(localStorage.getItem('rapiQsoLogs') || '[]');
 
-        // DATABASE BAWAAN TERINTEGRASI LANGSUNG
         const defaultDatabase = {
             "JZ10CAI": { name: "AGUS SYARIFUDIN", address: "Dusun. Sodong RT. 004/014 Desa Bojongmengger Kec. Cijeungjing" },
             "JZ10CAO": { name: "OTONG JUANDA", address: "Dusun. Kaler RT. 006/002 Desa Cijeungjing Kec. Cijeungjing" },
@@ -512,7 +520,6 @@
         };
 
         let customDatabase = JSON.parse(localStorage.getItem('rapiCustomDB') || '{}');
-        // Gabungkan database bawaan dengan database kustom pengguna (jika ada)
         function getCombinedDatabase() {
             return { ...defaultDatabase, ...customDatabase };
         }
@@ -596,6 +603,12 @@
                 document.getElementById('opacityRange').value = alpha;
                 document.getElementById('opacityValue').innerText = Math.round(alpha * 100) + '%';
             }
+            const backdrop = window.getComputedStyle(box).backdropFilter;
+            if (backdrop && backdrop.includes('blur')) {
+                document.getElementById('boxBlurSelect').value = 'blur(4px)';
+            } else {
+                document.getElementById('boxBlurSelect').value = 'none';
+            }
         }
 
         function changeBoxOpacity(val) {
@@ -604,6 +617,15 @@
             if (!box) return;
             box.style.backgroundColor = `rgba(30, 41, 59, ${val})`;
             document.getElementById('opacityValue').innerText = Math.round(val * 100) + '%';
+            saveCurrentState();
+        }
+
+        function changeBoxBlur(blurVal) {
+            const boxId = document.getElementById('targetBoxSelect').value;
+            const box = document.getElementById(boxId);
+            if (!box) return;
+            box.style.backdropFilter = blurVal;
+            box.style.webkitBackdropFilter = blurVal;
             saveCurrentState();
         }
 
@@ -692,6 +714,10 @@
                         if (savedState.layout[id].width) box.style.width = savedState.layout[id].width;
                         if (savedState.layout[id].height) box.style.height = savedState.layout[id].height;
                         if (savedState.layout[id].bgColor) box.style.backgroundColor = savedState.layout[id].bgColor;
+                        if (savedState.layout[id].blur !== undefined) {
+                            box.style.backdropFilter = savedState.layout[id].blur;
+                            box.style.webkitBackdropFilter = savedState.layout[id].blur;
+                        }
                         if (savedState.layout[id].color) {
                             box.style.color = savedState.layout[id].color;
                             box.querySelectorAll('*').forEach(el => {
@@ -720,7 +746,16 @@
                 box.querySelectorAll('.box-text').forEach(el => {
                     fontSizes.push(el.style.fontSize || `${el.getAttribute('data-base')}px`);
                 });
-                layout[box.id] = { left: box.style.left, top: box.style.top, width: box.style.width, height: box.style.height, bgColor: box.style.backgroundColor, color: box.style.color, fontSizes: fontSizes };
+                layout[box.id] = { 
+                    left: box.style.left, 
+                    top: box.style.top, 
+                    width: box.style.width, 
+                    height: box.style.height, 
+                    bgColor: box.style.backgroundColor, 
+                    blur: box.style.backdropFilter,
+                    color: box.style.color, 
+                    fontSizes: fontSizes 
+                };
             });
             const cardBgImg = document.getElementById('printable-card').style.backgroundImage;
             const bgImageSrc = cardBgImg ? cardBgImg.slice(5, -2) : '';
@@ -839,7 +874,7 @@
             document.querySelectorAll('.draggable-box').forEach(box => {
                 const fontSizes = [];
                 box.querySelectorAll('.box-text').forEach(el => fontSizes.push(el.style.fontSize));
-                states[box.id] = { left: box.style.left, top: box.style.top, width: box.style.width, height: box.style.height, bgColor: box.style.backgroundColor, color: box.style.color, fontSizes: fontSizes };
+                states[box.id] = { left: box.style.left, top: box.style.top, width: box.style.width, height: box.style.height, bgColor: box.style.backgroundColor, blur: box.style.backdropFilter, color: box.style.color, fontSizes: fontSizes };
             });
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(states, null, 2));
             const a = document.createElement('a');
@@ -862,6 +897,10 @@
                             if (states[id].width) box.style.width = states[id].width;
                             if (states[id].height) box.style.height = states[id].height;
                             if (states[id].bgColor) box.style.backgroundColor = states[id].bgColor;
+                            if (states[id].blur !== undefined) {
+                                box.style.backdropFilter = states[id].blur;
+                                box.style.webkitBackdropFilter = states[id].blur;
+                            }
                         }
                     });
                     saveCurrentState();
@@ -929,7 +968,6 @@
                 address = activeDB[callsign].address;
                 source = "Database Terintegrasi";
             } else {
-                // Pencarian parsial jika input berupa nama atau sebagian callsign
                 let foundKey = Object.keys(activeDB).find(k => k.includes(callsign) || activeDB[k].name.toUpperCase().includes(callsign));
                 if (foundKey) {
                     name = activeDB[foundKey].name;
