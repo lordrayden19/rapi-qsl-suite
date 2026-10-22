@@ -31,7 +31,6 @@
             min-height: 70px;
             border: 2px dashed rgba(245, 158, 11, 0.4);
             background-color: rgba(30, 41, 59, 0.90);
-            /* Default Blur aktif */
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
             border-radius: 0.75rem;
@@ -44,6 +43,14 @@
             width: 20px;
             height: 20px;
         }
+        /* Animasi Peringatan Ngintip */
+        @keyframes bounceGlow {
+            0%, 100% { transform: scale(1); text-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+            50% { transform: scale(1.05); text-shadow: 0 0 20px rgba(245, 158, 11, 1), 0 0 30px rgba(239, 68, 68, 0.8); }
+        }
+        .animate-warning {
+            animation: bounceGlow 1.5s infinite ease-in-out;
+        }
         @media print {
             body * { visibility: hidden; }
             #printable-card, #printable-card * { visibility: visible; }
@@ -54,6 +61,22 @@
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-start p-2 md:p-4">
+
+    <!-- Modal Peringatan Pelindung Halaman -->
+    <div id="warningModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-slate-900 border-2 border-amber-500 p-6 md:p-8 rounded-2xl shadow-2xl text-center max-w-md w-full space-y-4">
+            <div class="text-5xl animate-bounce">🚷</div>
+            <h3 class="text-xl md:text-2xl font-extrabold text-amber-400 animate-warning font-mono-custom tracking-wide">
+                EITS KAMU MAU NGINTIP YA....!???
+            </h3>
+            <p class="text-xs md:text-sm text-slate-300">
+                Akses untuk melihat sumber halaman (*View Source* / *Inspect Element*) dilindungi demi keamanan data dan sistem aplikasi QSL Card RAPI.
+            </p>
+            <button onclick="closeWarningModal()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs md:text-sm py-2.5 rounded-xl transition shadow">
+                Ups, Ketahuan! Tutup 😅
+            </button>
+        </div>
+    </div>
 
     <div class="w-full max-w-6xl mx-auto space-y-4 md:space-y-6">
         
@@ -413,6 +436,34 @@
     </div>
 
     <script>
+        // --- SCRIPT PELINDUNG HALAMAN (ANTI VIEW SOURCE / INSPECT) ---
+        function showWarningModal() {
+            document.getElementById('warningModal').classList.remove('hidden');
+        }
+
+        function closeWarningModal() {
+            document.getElementById('warningModal').classList.add('hidden');
+        }
+
+        // Mencegah klik kanan
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            showWarningModal();
+        });
+
+        // Mencegah tombol pintasan keyboard (F12, Ctrl+U, Ctrl+Shift+I/C/J, Ctrl+S)
+        document.addEventListener('keydown', function(e) {
+            if (
+                e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'C' || e.key === 'c' || e.key === 'J' || e.key === 'j')) ||
+                (e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.key === 'S' || e.key === 's'))
+            ) {
+                e.preventDefault();
+                showWarningModal();
+            }
+        });
+        // --- AKHIR SCRIPT PELINDUNG HALAMAN ---
+
         let userEditedTime = false;
         let timeInterval;
         let currentTZ = 'Asia/Jakarta';
