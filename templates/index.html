@@ -445,13 +445,11 @@
             document.getElementById('warningModal').classList.add('hidden');
         }
 
-        // Mencegah klik kanan
         document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
             showWarningModal();
         });
 
-        // Mencegah tombol pintasan keyboard (F12, Ctrl+U, Ctrl+Shift+I/C/J, Ctrl+S)
         document.addEventListener('keydown', function(e) {
             if (
                 e.key === 'F12' ||
@@ -967,6 +965,43 @@
                 link.download = `QSL_Card_${document.getElementById('displayCallsign').innerText}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
+            });
+        }
+
+        // --- FUNGSI EKSPOR LOG KE JPG (DIOPTIMALKAN UNTUK HP) ---
+        function exportToJPG() {
+            if (qsoLogs.length === 0) {
+                alert("Belum ada data log QSO untuk diekspor!");
+                return;
+            }
+
+            const logArea = document.getElementById('logTableArea');
+            const titleHeader = logArea.querySelector('.log-title-header');
+            if (titleHeader) titleHeader.classList.remove('hidden');
+
+            const eventName = document.getElementById('eventInput').value || "Rutin / Net Lokal";
+            const dateVal = document.getElementById('dateInput').value || "-";
+            document.getElementById('jpgHeaderEvent').innerText = `RIWAYAT LOG QSO RAPI - ${eventName}`;
+            document.getElementById('jpgHeaderDate').innerText = `Tanggal Cetak: ${dateVal}`;
+
+            // Sembunyikan tombol aksi pada tabel agar hasil JPG bersih
+            const actionCols = logArea.querySelectorAll('.action-col');
+            actionCols.forEach(el => el.classList.add('hidden'));
+
+            // Menggunakan scale: 1.5 agar proses rendering ringan dan aman untuk memori browser HP
+            html2canvas(logArea, { scale: 1.5, useCORS: true, backgroundColor: "#0f172a" }).then(canvas => {
+                // Tampilkan kembali kolom aksi setelah render selesai
+                actionCols.forEach(el => el.classList.remove('hidden'));
+                if (titleHeader) titleHeader.classList.add('hidden');
+
+                const link = document.createElement('a');
+                link.download = `Log_QSO_RAPI_${dateVal}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+            }).catch(err => {
+                actionCols.forEach(el => el.classList.remove('hidden'));
+                if (titleHeader) titleHeader.classList.add('hidden');
+                alert("Gagal mengekspor log ke JPG: " + err);
             });
         }
 
