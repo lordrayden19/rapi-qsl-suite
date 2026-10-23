@@ -1,32 +1,87 @@
 import json
 import os
 from flask import Flask, jsonify, render_template, request
+import psycopg2
 
 app = Flask(__name__)
 
-# File JSON untuk menyimpan arsip log secara permanen di server
-LOGS_FILE = "server_logs.json"
+# Mengambil URL Database dari Environment Variable Render
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+
+def get_db_connection():
+  db_url = DATABASE_URL
+  if db_url and db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+  return psycopg2.connect(db_url, sslmode="require")
+
+
+# Inisialisasi tabel otomatis jika belum ada di database cloud
+def init_db():
+  if not DATABASE_URL:
+    return
+  try:
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+            CREATE TABLE IF NOT EXISTS app_storage (
+                key TEXT PRIMARY KEY,
+                data TEXT
+            );
+        """)
+    initial_data = json.dumps({"devQsoLogs": [], "operatorLogs": []})
+    cur.execute(
+        "INSERT INTO app_storage (key, data) VALUES (%s, %s) ON CONFLICT (key)"
+        " DO NOTHING;",
+        ("logs_data", initial_data),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+  except Exception as e:
+    print("Error init DB:", e)
+
+
+# Jalankan inisialisasi saat server mulai
+init_db()
 
 
 def load_server_logs():
-  if os.path.exists(LOGS_FILE):
-    try:
-      with open(LOGS_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
-    except:
-      pass
+  if not DATABASE_URL:
+    return {"devQsoLogs": [], "operatorLogs": []}
+  try:
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT data FROM app_storage WHERE key = %s;", ("logs_data",))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if row and row[0]:
+      return json.loads(row[0])
+  except Exception as e:
+    print("Error load logs:", e)
   return {"devQsoLogs": [], "operatorLogs": []}
 
 
 def save_server_logs(data):
-  with open(LOGS_FILE, "w", encoding="utf-8") as f:
-    json.dump(data, f, ensure_ascii=False, indent=2)
+  if not DATABASE_URL:
+    return
+  try:
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE app_storage SET data = %s WHERE key = %s;",
+        (json.dumps(data), "logs_data"),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+  except Exception as e:
+    print("Error save logs:", e)
 
 
 @app.route("/")
 def index():
-  # Pastikan file HTML utama Anda berada di dalam folder 'templates'
-  # dengan nama index.html
   return render_template("index.html")
 
 
@@ -49,4 +104,4 @@ def update_server_logs():
 
 if __name__ == "__main__":
   app.run(debug=True, host="0.0.0.0", port=5000)
-    
+  
