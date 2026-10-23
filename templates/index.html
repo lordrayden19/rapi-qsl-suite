@@ -572,12 +572,12 @@
                 </div>
             </div>
 
-            <!-- Bagian 2: Log QSO Terpusat (Eksklusif Developer) - Independen dari Halaman Depan -->
+            <!-- Bagian 2: Log QSO Terpusat (Eksklusif Developer) - Terisolasi & Aman -->
             <div class="space-y-4 pt-4 border-t border-slate-800">
                 <div class="flex flex-wrap justify-between items-center border-b border-slate-800 pb-4 gap-2">
                     <div>
                         <h2 class="text-xl font-bold text-amber-400">📝 Arsip Log QSO Terpusat (Developer View)</h2>
-                        <p class="text-xs text-slate-400 mt-1">Seluruh riwayat kontak QSO yang tersimpan secara terpusat untuk pengawasan pengembang (tidak terpengaruh penghapusan di halaman depan).</p>
+                        <p class="text-xs text-slate-400 mt-1">Seluruh riwayat kontak QSO yang tersimpan secara terpusat dan aman (tidak terpengaruh oleh penghapusan log di halaman depan).</p>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <button onclick="clearAllDevQsoLogs()" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow">
@@ -686,7 +686,7 @@
         let currentTZ = 'Asia/Jakarta';
         let currentZoneName = 'WIB';
         
-        // Memisahkan State Storage antara Halaman Depan dan Arsip Developer
+        // Penyimpanan terpisah dan independen
         let qsoLogs = JSON.parse(localStorage.getItem('rapiQsoLogs') || '[]');
         let devQsoLogs = JSON.parse(localStorage.getItem('rapiDevQsoLogs') || '[]');
         let operatorLogs = JSON.parse(localStorage.getItem('rapiOperatorLogs') || '[]');
@@ -1228,10 +1228,13 @@
             }
         }
 
+        // Fungsi Reset Diisolasi agar tidak menghapus Arsip Log Developer (`rapiDevQsoLogs` & `rapiOperatorLogs`)
         function clearAllLocalStorage() {
-            if (confirm("Hapus seluruh penyimpanan lokal (Log & Database tambahan)?")) {
-                localStorage.clear();
-                alert("Data berhasil dibersihkan!");
+            if (confirm("Hapus seluruh penyimpanan lokal halaman depan (Log & Database tambahan)? Arsip developer tetap aman.")) {
+                localStorage.removeItem('rapiQsoLogs');
+                localStorage.removeItem('rapiCustomDB');
+                localStorage.removeItem('qslCardActiveState');
+                alert("Data halaman depan berhasil dibersihkan!");
                 location.reload();
             }
         }
@@ -1660,7 +1663,7 @@
             qsoLogs.push(newLogEntry);
             localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
 
-            // Simpan juga secara independen ke arsip log developer
+            // Simpan secara independen ke arsip log developer
             devQsoLogs.push(newLogEntry);
             localStorage.setItem('rapiDevQsoLogs', JSON.stringify(devQsoLogs));
 
