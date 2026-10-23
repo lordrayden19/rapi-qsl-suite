@@ -572,16 +572,16 @@
                 </div>
             </div>
 
-            <!-- Bagian 2: Log QSO Terpusat (Eksklusif Developer) -->
+            <!-- Bagian 2: Log QSO Terpusat (Eksklusif Developer) - Independen dari Halaman Depan -->
             <div class="space-y-4 pt-4 border-t border-slate-800">
                 <div class="flex flex-wrap justify-between items-center border-b border-slate-800 pb-4 gap-2">
                     <div>
                         <h2 class="text-xl font-bold text-amber-400">📝 Arsip Log QSO Terpusat (Developer View)</h2>
-                        <p class="text-xs text-slate-400 mt-1">Seluruh riwayat kontak QSO yang tersimpan secara terpusat untuk pengawasan pengembang.</p>
+                        <p class="text-xs text-slate-400 mt-1">Seluruh riwayat kontak QSO yang tersimpan secara terpusat untuk pengawasan pengembang (tidak terpengaruh penghapusan di halaman depan).</p>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <button onclick="clearAllDevQsoLogs()" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow">
-                            🗑️ Hapus Semua Log QSO
+                            🗑️ Hapus Semua Arsip Log QSO
                         </button>
                     </div>
                 </div>
@@ -604,7 +604,7 @@
                         </thead>
                         <tbody id="devQsoLogTableBody">
                             <tr>
-                                <td colspan="10" class="p-4 text-center text-slate-500">Belum ada data log QSO.</td>
+                                <td colspan="10" class="p-4 text-center text-slate-500">Belum ada arsip log QSO.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -685,7 +685,10 @@
         let timeInterval;
         let currentTZ = 'Asia/Jakarta';
         let currentZoneName = 'WIB';
+        
+        // Memisahkan State Storage antara Halaman Depan dan Arsip Developer
         let qsoLogs = JSON.parse(localStorage.getItem('rapiQsoLogs') || '[]');
+        let devQsoLogs = JSON.parse(localStorage.getItem('rapiDevQsoLogs') || '[]');
         let operatorLogs = JSON.parse(localStorage.getItem('rapiOperatorLogs') || '[]');
         let currentOperator = JSON.parse(localStorage.getItem('rapiCurrentOperator') || 'null');
 
@@ -778,28 +781,24 @@
         function deleteDevQsoItem(index) {
             if (!verifyDeveloperAuth()) return;
             if (confirm("Hapus data log QSO ini dari arsip pengembang?")) {
-                qsoLogs.splice(index, 1);
-                localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
-                updateLogTable();
+                devQsoLogs.splice(index, 1);
+                localStorage.setItem('rapiDevQsoLogs', JSON.stringify(devQsoLogs));
                 updateDevQsoLogTable();
-                updateStatistics();
-                alert("Log QSO berhasil dihapus.");
+                alert("Log QSO di arsip pengembang berhasil dihapus.");
             }
         }
 
         function clearAllDevQsoLogs() {
-            if (qsoLogs.length === 0) {
-                alert("Belum ada data log QSO untuk dihapus.");
+            if (devQsoLogs.length === 0) {
+                alert("Belum ada arsip log QSO untuk dihapus.");
                 return;
             }
             if (!verifyDeveloperAuth()) return;
             if (confirm("PERINGATAN: Apakah Anda yakin ingin MENGHAPUS SEMUA arsip log QSO terpusat?")) {
-                qsoLogs = [];
-                localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
-                updateLogTable();
+                devQsoLogs = [];
+                localStorage.setItem('rapiDevQsoLogs', JSON.stringify(devQsoLogs));
                 updateDevQsoLogTable();
-                updateStatistics();
-                alert("Semua arsip log QSO berhasil dikosongkan.");
+                alert("Semua arsip log QSO pengembang berhasil dikosongkan.");
             }
         }
 
@@ -827,12 +826,12 @@
         function updateDevQsoLogTable() {
             const tbody = document.getElementById('devQsoLogTableBody');
             if (!tbody) return;
-            if (qsoLogs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500">Belum ada data log QSO.</td></tr>`;
+            if (devQsoLogs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500">Belum ada arsip log QSO.</td></tr>`;
                 return;
             }
             tbody.innerHTML = "";
-            qsoLogs.forEach((log, index) => {
+            devQsoLogs.forEach((log, index) => {
                 tbody.innerHTML += `<tr class="border-b border-slate-800 hover:bg-slate-800/50">
                     <td class="p-2">${log.date}</td>
                     <td class="p-2">${log.time}</td>
@@ -1655,8 +1654,16 @@
             statusInfo.innerText = `Data QSO berhasil disimpan ke log.`;
             statusInfo.className = "text-xs text-emerald-400 mt-2";
 
-            qsoLogs.push({ date: dateVal, time: timeVal, callsign: callsignInput, freq, name, address, rst: rst || "59", ncs: ncs || "-", event: eventName });
+            const newLogEntry = { date: dateVal, time: timeVal, callsign: callsignInput, freq, name, address, rst: rst || "59", ncs: ncs || "-", event: eventName };
+            
+            // Simpan ke log halaman depan
+            qsoLogs.push(newLogEntry);
             localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
+
+            // Simpan juga secara independen ke arsip log developer
+            devQsoLogs.push(newLogEntry);
+            localStorage.setItem('rapiDevQsoLogs', JSON.stringify(devQsoLogs));
+
             updateLogTable();
             updateDevQsoLogTable();
             updateStatistics();
@@ -1726,11 +1733,10 @@
         }
 
         function deleteLogItem(index) {
-            if (confirm("Hapus log ini?")) {
+            if (confirm("Hapus log ini dari halaman depan?")) {
                 qsoLogs.splice(index, 1);
                 localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
                 updateLogTable();
-                updateDevQsoLogTable();
                 updateStatistics();
             }
         }
