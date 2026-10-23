@@ -456,7 +456,7 @@
 
             </div>
 
-            <!-- Panel Log Data QSO & Ekspor -->
+            <!-- Panel Log Data QSO & Ekspor (Halaman Depan / Publik) -->
             <div class="bg-slate-900 p-4 md:p-6 rounded-2xl shadow-xl border border-slate-800 no-print mt-4 space-y-3">
                 <div class="flex flex-wrap justify-between items-center gap-3">
                     <h3 class="text-sm md:text-lg font-bold text-amber-400">📊 Log Data QSO & QSL Manager</h3>
@@ -532,40 +532,83 @@
 
         </div>
 
-        <!-- KONTEN TAB 2: DEVELOPER LOG (PANEL PEMANTAU PENGGUNA) - PROTECTED -->
-        <div id="contentDeveloper" class="hidden bg-slate-900 p-6 md:p-8 rounded-2xl shadow-xl border border-slate-800 space-y-6">
-            <div class="flex flex-wrap justify-between items-center border-b border-slate-800 pb-4 gap-2">
-                <div>
-                    <h2 class="text-xl font-bold text-amber-400">📊 Panel Pemantau Pengguna (Developer Log)</h2>
-                    <p class="text-xs text-slate-400 mt-1">Daftar stasiun atau operator yang telah melakukan Check-In dan menggunakan aplikasi ini.</p>
+        <!-- KONTEN TAB 2: DEVELOPER LOG (PANEL TERPROTEKSI KHUSUS DEVELOPER) -->
+        <div id="contentDeveloper" class="hidden bg-slate-900 p-6 md:p-8 rounded-2xl shadow-xl border border-slate-800 space-y-8">
+            
+            <!-- Bagian 1: Log Operator / Stasiun -->
+            <div class="space-y-4">
+                <div class="flex flex-wrap justify-between items-center border-b border-slate-800 pb-4 gap-2">
+                    <div>
+                        <h2 class="text-xl font-bold text-amber-400">📊 Panel Pemantau Pengguna (Operator Check-In)</h2>
+                        <p class="text-xs text-slate-400 mt-1">Daftar stasiun atau operator yang telah melakukan Check-In dan menggunakan aplikasi.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="exportOperatorLogCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow">
+                            📥 Ekspor CSV
+                        </button>
+                        <button onclick="clearAllOperatorLogs()" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow">
+                            🗑️ Hapus Semua Log Pengguna
+                        </button>
+                    </div>
                 </div>
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="exportOperatorLogCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow">
-                        📥 Ekspor CSV
-                    </button>
-                    <button onclick="clearAllOperatorLogs()" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow">
-                        🗑️ Hapus Semua Log Pengguna
-                    </button>
+                
+                <div class="overflow-x-auto bg-slate-950 p-4 rounded-xl border border-slate-800">
+                    <table class="w-full text-left text-xs text-slate-300 border-collapse">
+                        <thead>
+                            <tr class="bg-slate-800 text-amber-300 border-b border-slate-700">
+                                <th class="p-2.5">Waktu Check-In</th>
+                                <th class="p-2.5">Callsign Operator</th>
+                                <th class="p-2.5">Nama Operator</th>
+                                <th class="p-2.5">Status Sesi</th>
+                                <th class="p-2.5 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="operatorLogTableBody">
+                            <tr>
+                                <td colspan="5" class="p-4 text-center text-slate-500">Belum ada data operator tercatat.</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-            
-            <div class="overflow-x-auto bg-slate-950 p-4 rounded-xl border border-slate-800">
-                <table class="w-full text-left text-xs text-slate-300 border-collapse">
-                    <thead>
-                        <tr class="bg-slate-800 text-amber-300 border-b border-slate-700">
-                            <th class="p-2.5">Waktu Check-In</th>
-                            <th class="p-2.5">Callsign Operator</th>
-                            <th class="p-2.5">Nama Operator</th>
-                            <th class="p-2.5">Status Sesi</th>
-                            <th class="p-2.5 text-center">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="operatorLogTableBody">
-                        <tr>
-                            <td colspan="5" class="p-4 text-center text-slate-500">Belum ada data operator tercatat.</td>
-                        </tr>
-                    </tbody>
-                </table>
+
+            <!-- Bagian 2: Log QSO Terpusat (Eksklusif Developer) -->
+            <div class="space-y-4 pt-4 border-t border-slate-800">
+                <div class="flex flex-wrap justify-between items-center border-b border-slate-800 pb-4 gap-2">
+                    <div>
+                        <h2 class="text-xl font-bold text-amber-400">📝 Arsip Log QSO Terpusat (Developer View)</h2>
+                        <p class="text-xs text-slate-400 mt-1">Seluruh riwayat kontak QSO yang tersimpan secara terpusat untuk pengawasan pengembang.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="clearAllDevQsoLogs()" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow">
+                            🗑️ Hapus Semua Log QSO
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto bg-slate-950 p-4 rounded-xl border border-slate-800">
+                    <table class="w-full text-left text-xs text-slate-300 border-collapse">
+                        <thead>
+                            <tr class="bg-slate-800 text-amber-300 border-b border-slate-700">
+                                <th class="p-2">Tanggal</th>
+                                <th class="p-2">Waktu</th>
+                                <th class="p-2">Callsign</th>
+                                <th class="p-2">Freq</th>
+                                <th class="p-2">Nama</th>
+                                <th class="p-2">Alamat</th>
+                                <th class="p-2">RST</th>
+                                <th class="p-2">NCS</th>
+                                <th class="p-2">Event</th>
+                                <th class="p-2 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="devQsoLogTableBody">
+                            <tr>
+                                <td colspan="10" class="p-4 text-center text-slate-500">Belum ada data log QSO.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <div>
@@ -655,6 +698,7 @@
                 document.getElementById('operatorModal').classList.remove('hidden');
             }
             updateOperatorLogTable();
+            updateDevQsoLogTable();
         });
 
         function submitOperatorCheckIn() {
@@ -692,7 +736,7 @@
             saveCurrentState();
         }
 
-        // --- AUTENTIKASI DEVELOPER UNTUK AKSES & HAPUS LOG PENGGUNA ---
+        // --- AUTENTIKASI DEVELOPER UNTUK AKSES & HAPUS LOG ---
         function verifyDeveloperAuth() {
             const call = prompt("🔒 Akses Terbatas Developer\nMasukkan Callsign Pengembang:", "").trim().toUpperCase();
             if (call !== "JZ10IXM") {
@@ -731,6 +775,34 @@
             }
         }
 
+        function deleteDevQsoItem(index) {
+            if (!verifyDeveloperAuth()) return;
+            if (confirm("Hapus data log QSO ini dari arsip pengembang?")) {
+                qsoLogs.splice(index, 1);
+                localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
+                updateLogTable();
+                updateDevQsoLogTable();
+                updateStatistics();
+                alert("Log QSO berhasil dihapus.");
+            }
+        }
+
+        function clearAllDevQsoLogs() {
+            if (qsoLogs.length === 0) {
+                alert("Belum ada data log QSO untuk dihapus.");
+                return;
+            }
+            if (!verifyDeveloperAuth()) return;
+            if (confirm("PERINGATAN: Apakah Anda yakin ingin MENGHAPUS SEMUA arsip log QSO terpusat?")) {
+                qsoLogs = [];
+                localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
+                updateLogTable();
+                updateDevQsoLogTable();
+                updateStatistics();
+                alert("Semua arsip log QSO berhasil dikosongkan.");
+            }
+        }
+
         function updateOperatorLogTable() {
             const tbody = document.getElementById('operatorLogTableBody');
             if (!tbody) return;
@@ -747,6 +819,32 @@
                     <td class="p-2.5"><span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-[10px]">Aktif / Terverifikasi</span></td>
                     <td class="p-2.5 text-center">
                         <button onclick="deleteOperatorLog(${index})" class="bg-rose-600 hover:bg-rose-500 text-white px-2 py-1 rounded text-[10px] transition font-semibold">Hapus</button>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function updateDevQsoLogTable() {
+            const tbody = document.getElementById('devQsoLogTableBody');
+            if (!tbody) return;
+            if (qsoLogs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500">Belum ada data log QSO.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = "";
+            qsoLogs.forEach((log, index) => {
+                tbody.innerHTML += `<tr class="border-b border-slate-800 hover:bg-slate-800/50">
+                    <td class="p-2">${log.date}</td>
+                    <td class="p-2">${log.time}</td>
+                    <td class="p-2 font-bold text-amber-400">${log.callsign}</td>
+                    <td class="p-2 font-mono text-amber-300">${log.freq}</td>
+                    <td class="p-2">${log.name}</td>
+                    <td class="p-2">${log.address}</td>
+                    <td class="p-2">${log.rst}</td>
+                    <td class="p-2">${log.ncs}</td>
+                    <td class="p-2 italic">${log.event}</td>
+                    <td class="p-2 text-center">
+                        <button onclick="deleteDevQsoItem(${index})" class="bg-rose-600 hover:bg-rose-500 text-white px-2 py-1 rounded text-[10px] transition font-semibold">Hapus</button>
                     </td>
                 </tr>`;
             });
@@ -930,6 +1028,7 @@
                 devContent.classList.remove('hidden');
                 tabDevBtn.className = "bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow";
                 updateOperatorLogTable();
+                updateDevQsoLogTable();
             } else if (tabName === 'about') {
                 aboutContent.classList.remove('hidden');
                 tabAboutBtn.className = "bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow";
@@ -1559,6 +1658,7 @@
             qsoLogs.push({ date: dateVal, time: timeVal, callsign: callsignInput, freq, name, address, rst: rst || "59", ncs: ncs || "-", event: eventName });
             localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
             updateLogTable();
+            updateDevQsoLogTable();
             updateStatistics();
             saveCurrentState();
         }
@@ -1630,6 +1730,7 @@
                 qsoLogs.splice(index, 1);
                 localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
                 updateLogTable();
+                updateDevQsoLogTable();
                 updateStatistics();
             }
         }
