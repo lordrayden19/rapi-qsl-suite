@@ -108,8 +108,14 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">Callsign Lawan</label>
-                        <input type="text" id="targetCallsign" placeholder="JZ10CAO" value="JZ10CAO" oninput="checkCallsignAutoFill(); saveCurrentState();"
-                               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
+                        <div class="flex gap-1">
+                            <input type="text" id="targetCallsign" placeholder="JZ10CAO" value="JZ10CAO" oninput="saveCurrentState()"
+                                   class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
+                            <button onclick="checkCallsignDatabase()" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-2 rounded-lg text-xs font-semibold transition shadow whitespace-nowrap">
+                                🔍 Cek
+                            </button>
+                        </div>
+                        <div id="checkStatus" class="text-[10px] mt-1 text-slate-400">Tekan tombol Cek untuk verifikasi database.</div>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">Nama Lengkap (Stasiun Lawan)</label>
@@ -118,7 +124,7 @@
                     </div>
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-medium text-slate-300 mb-1">Alamat / KRAP / Wilayah</label>
-                        <input type="text" id="targetAddress" placeholder="Dusun. Kaler RT. 006/002 Desa Cijeungjing" value="Dusun. Kaler RT. 006/002 Desa Cijeungjing Kec. Cijeungjing" oninput="saveCurrentState()"
+                        <input type="text" id="targetAddress" placeholder="Dusun. Kaler RT. 006/002" value="Dusun. Kaler RT. 006/002 Desa Cijeungjing Kec. Cijeungjing" oninput="saveCurrentState()"
                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                     </div>
                 </div>
@@ -168,7 +174,7 @@
                 <!-- Tombol Aksi Utama -->
                 <div class="flex flex-wrap gap-2 mb-3 items-center">
                     <button onclick="cariDataRAPI()" class="bg-amber-600 hover:bg-amber-500 text-white font-semibold py-2 px-4 rounded-lg transition shadow-md text-xs md:text-sm flex-1 sm:flex-none">
-                        🔍 Terapkan & Catat Log
+                        📥 Simpan ke Log QSO
                     </button>
                     <button onclick="downloadLayoutFile()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-3 rounded-lg transition shadow-md text-xs">
                         💾 Simpan Tata Letak
@@ -207,7 +213,7 @@
                         </button>
                     </div>
                 </div>
-                <p id="statusInfo" class="text-xs text-slate-400 mt-2">*Database lokal aktif. Untuk stasiun luar daerah, ketik manual nama & alamat pada kolom di atas.</p>
+                <p id="statusInfo" class="text-xs text-slate-400 mt-2">*Gunakan tombol 'Cek' untuk memverifikasi callsign di database.</p>
             </div>
 
             <!-- Layout Utama: Area Desain & Panel Kontrol Tampilan -->
@@ -716,13 +722,30 @@
             document.getElementById('qrCodeImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrText}`;
         }
 
-        function checkCallsignAutoFill() {
+        // --- FITUR CEK CALLSIGN DI DATABASE ---
+        function checkCallsignDatabase() {
             const cs = document.getElementById('targetCallsign').value.trim().toUpperCase();
+            const statusEl = document.getElementById('checkStatus');
+            const nameInput = document.getElementById('targetName');
+            const addrInput = document.getElementById('targetAddress');
+
+            if (!cs) {
+                alert("Masukkan Callsign terlebih dahulu!");
+                return;
+            }
+
             const activeDB = getCombinedDatabase();
             if (activeDB[cs]) {
-                document.getElementById('targetName').value = activeDB[cs].name;
-                document.getElementById('targetAddress').value = activeDB[cs].address;
+                nameInput.value = activeDB[cs].name;
+                addrInput.value = activeDB[cs].address;
+                statusEl.innerHTML = `<span class="text-emerald-400 font-bold">✅ Data ditemukan di database! Siap disimpan ke log.</span>`;
+            } else {
+                nameInput.value = "";
+                addrInput.value = "";
+                nameInput.focus();
+                statusEl.innerHTML = `<span class="text-amber-400 font-bold">⚠️ Data tidak ada di database. Silakan masukkan Nama & Alamat manual!</span>`;
             }
+            saveCurrentState();
         }
 
         function syncControllerValues() {
@@ -1225,10 +1248,10 @@
             const statusInfo = document.getElementById('statusInfo');
 
             if (!callsign) { alert("Masukkan Callsign terlebih dahulu!"); return; }
-
-            // Jika kosong, beri default
-            if (!name) name = `ANGGOTA (${callsign})`;
-            if (!address) address = "Indonesia";
+            if (!name || !address) {
+                alert("Nama dan Alamat wajib diisi! Silakan tekan tombol 'Cek' atau ketik secara manual.");
+                return;
+            }
 
             document.getElementById('displayRst').innerText = rst || "59";
             document.getElementById('displayNcs').innerText = ncs || "-";
@@ -1238,7 +1261,7 @@
             document.getElementById('displayName').innerText = name;
             document.getElementById('displayAddress').innerText = address;
             
-            statusInfo.innerText = `Data diterapkan & dicatat ke log.`;
+            statusInfo.innerText = `Data QSO berhasil disimpan ke log.`;
             statusInfo.className = "text-xs text-emerald-400 mt-2";
 
             qsoLogs.push({ date: dateVal, time: timeVal, callsign: callsignInput, freq, name, address, rst: rst || "59", ncs: ncs || "-", event: eventName });
