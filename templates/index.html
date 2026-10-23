@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" id="htmlRoot">
 <head>
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#f59e0b">
@@ -43,7 +43,6 @@
             width: 20px;
             height: 20px;
         }
-        /* Animasi Peringatan Ngintip */
         @keyframes bounceGlow {
             0%, 100% { transform: scale(1); text-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
             50% { transform: scale(1.05); text-shadow: 0 0 20px rgba(245, 158, 11, 1), 0 0 30px rgba(239, 68, 68, 0.8); }
@@ -60,7 +59,33 @@
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-start p-2 md:p-4">
+<body id="appBody" class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-start p-2 md:p-4 transition-colors duration-300">
+
+    <!-- Modal Check-In Operator / Pelacakan Pengguna untuk Pengembang -->
+    <div id="operatorModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-amber-500 p-6 md:p-8 rounded-2xl shadow-2xl text-center max-w-md w-full space-y-4">
+            <div class="text-4xl">📡</div>
+            <h3 class="text-lg md:text-xl font-extrabold text-amber-400 font-mono-custom tracking-wide">
+                CHECK-IN OPERATOR / STASIUN
+            </h3>
+            <p class="text-xs text-slate-300">
+                Masukkan Callsign dan Nama Anda agar sistem dan pengembang mengetahui stasiun yang sedang menggunakan aplikasi ini.
+            </p>
+            <div class="space-y-3 text-left">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Callsign Anda (Contoh: JZ10IXM)</label>
+                    <input type="text" id="opModalCall" placeholder="JZ10IXM" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Nama Lengkap Anda</label>
+                    <input type="text" id="opModalName" placeholder="DIAN HERMAWAN" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                </div>
+            </div>
+            <button onclick="submitOperatorCheckIn()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs md:text-sm py-2.5 rounded-xl transition shadow">
+                Masuk & Mulai Beroperasi 🚀
+            </button>
+        </div>
+    </div>
 
     <!-- Modal Peringatan Pelindung Halaman -->
     <div id="warningModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center hidden p-4">
@@ -80,15 +105,22 @@
 
     <div class="w-full max-w-6xl mx-auto space-y-4 md:space-y-6">
         
-        <!-- Navigasi Tab Menu -->
-        <div class="flex justify-between items-center bg-slate-900 px-4 py-3 rounded-2xl shadow-xl border border-slate-800 no-print">
+        <!-- Navigasi Tab Menu & Theme Switcher -->
+        <div class="flex flex-wrap justify-between items-center bg-slate-900 px-4 py-3 rounded-2xl shadow-xl border border-slate-800 no-print gap-2">
             <div class="flex items-center gap-2">
                 <span class="text-xl">📡</span>
                 <h1 class="font-bold text-amber-400 text-sm md:text-lg">RAPI QSL Suite Pro</h1>
+                <span id="activeOpBadge" class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">Operator: -</span>
             </div>
-            <div class="flex gap-2">
+            <div class="flex items-center gap-2">
+                <button onclick="toggleTheme()" id="themeToggleBtn" class="bg-slate-800 text-amber-400 px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow flex items-center gap-1">
+                    ☀️ <span id="themeText">Terang</span>
+                </button>
                 <button onclick="switchTab('generator')" id="tabGenerator" class="bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow">
                     Generator
+                </button>
+                <button onclick="switchTab('developer')" id="tabDeveloper" class="bg-slate-800 text-slate-300 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow">
+                    Developer Log 📊
                 </button>
                 <button onclick="switchTab('about')" id="tabAbout" class="bg-slate-800 text-slate-300 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow">
                     About
@@ -109,7 +141,7 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">Callsign Lawan</label>
                         <div class="flex gap-1">
-                            <input type="text" id="targetCallsign" placeholder="JZ10CAO" value="JZ10CAO" oninput="saveCurrentState()"
+                            <input type="text" id="targetCallsign" placeholder="CALLSIGN ANGGOTA" value="CALLSIGN ANGGOTA" oninput="saveCurrentState()"
                                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                             <button onclick="checkCallsignDatabase()" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-2 rounded-lg text-xs font-semibold transition shadow whitespace-nowrap">
                                 🔍 Cek
@@ -119,12 +151,12 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">Nama Lengkap (Stasiun Lawan)</label>
-                        <input type="text" id="targetName" placeholder="OTONG JUANDA" value="OTONG JUANDA" oninput="saveCurrentState()"
+                        <input type="text" id="targetName" placeholder="NAMA ANGGOTA" value="NAMA ANGGOTA" oninput="saveCurrentState()"
                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                     </div>
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-medium text-slate-300 mb-1">Alamat / KRAP / Wilayah</label>
-                        <input type="text" id="targetAddress" placeholder="Dusun. Kaler RT. 006/002" value="Dusun. Kaler RT. 006/002 Desa Cijeungjing Kec. Cijeungjing" oninput="saveCurrentState()"
+                        <input type="text" id="targetAddress" placeholder="ALAMAT ANGGOTA" value="ALAMAT ANGGOTA" oninput="saveCurrentState()"
                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                     </div>
                 </div>
@@ -216,6 +248,16 @@
                 <p id="statusInfo" class="text-xs text-slate-400 mt-2">*Gunakan tombol 'Cek' untuk memverifikasi callsign di database.</p>
             </div>
 
+            <!-- Sisi Kartu Toggle (Depan / Belakang) -->
+            <div class="flex justify-center gap-2 no-print">
+                <button onclick="switchCardSide('front')" id="btnSideFront" class="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition shadow">
+                    🎴 Sisi Depan Kartu
+                </button>
+                <button onclick="switchCardSide('back')" id="btnSideBack" class="bg-slate-800 text-slate-300 hover:bg-slate-700 px-4 py-1.5 rounded-lg text-xs font-bold transition shadow">
+                    🔄 Sisi Belakang Kartu
+                </button>
+            </div>
+
             <!-- Layout Utama: Area Desain & Panel Kontrol Tampilan -->
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 items-start">
                 
@@ -228,52 +270,78 @@
                             <span class="text-7xl md:text-9xl font-extrabold font-mono-custom text-amber-500">RAPI</span>
                         </div>
 
-                        <!-- 1. Header -->
-                        <div id="box-header" class="draggable-box top-3 left-3 flex justify-between items-center border-b border-amber-500/40 pb-2 z-20">
-                            <div class="flex items-center gap-2 w-full">
-                                <img src="/static/logo_rapi.png" alt="Logo" class="h-8 w-8 md:h-9 md:w-9 object-contain bg-white/15 p-1 rounded border border-amber-500/50">
-                                <div>
-                                    <div id="displayFreqHeader" class="text-amber-300 font-bold box-text text-xs md:text-sm" data-base="11">RAPI 143.040 MHz</div>
-                                    <h1 class="font-extrabold text-white font-mono-custom box-text text-sm md:text-lg" data-base="18">QSL CARD</h1>
-                                    <div id="displayEvent" class="text-sky-200 italic box-text text-[10px] md:text-xs" data-base="10">Event: Rutin / Net Lokal</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 2. Kotak Stasiun -->
-                        <div id="box-station" class="draggable-box top-24 left-3 z-20 shadow-lg">
-                            <div class="text-sky-300 uppercase tracking-wider mb-0.5 box-text text-[10px] md:text-xs" data-base="10">CONFIRMING QSO WITH</div>
-                            <div id="displayCallsign" class="font-bold text-amber-300 font-mono-custom box-text text-base md:text-xl" data-base="22">JZ10CAO</div>
-                            <div id="displayName" class="font-semibold text-white mt-0.5 box-text text-xs md:text-sm" data-base="15">OTONG JUANDA</div>
-                            <div id="displayAddress" class="text-slate-200 mt-0.5 leading-tight box-text text-[10px] md:text-xs" data-base="12">Dusun. Kaler RT. 006/002 Desa Cijeungjing</div>
-                        </div>
-
-                        <!-- 3. Kotak QSO & QR Code -->
-                        <div id="box-qso" class="draggable-box top-24 right-3 z-20 shadow-lg">
-                            <div class="flex items-center gap-3">
-                                <div class="grid grid-cols-2 gap-1 font-mono-custom box-text text-[11px] md:text-xs flex-1" data-base="12">
-                                    <div><span class="text-sky-300">FREQ:</span> <strong id="displayFreqBox" class="text-amber-300">143.040</strong></div>
-                                    <div><span class="text-sky-300">RST:</span> <strong id="displayRst" class="text-white">59</strong></div>
-                                    <div><span class="text-sky-300">DATE:</span> <strong id="displayDate" class="text-white">-</strong></div>
-                                    <div><span class="text-sky-300">TIME:</span> <strong id="displayTime" class="text-white">-</strong></div>
-                                    <div class="col-span-2 pt-1 border-t border-slate-700">
-                                        <span class="text-sky-300">NCS:</span> <strong id="displayNcs" class="text-amber-300">JZ04MIB</strong>
+                        <!-- TAMPILAN SISI DEPAN KARTU -->
+                        <div id="cardSideFront" class="w-full h-full relative">
+                            <!-- 1. Header -->
+                            <div id="box-header" class="draggable-box top-3 left-3 flex justify-between items-center border-b border-amber-500/40 pb-2 z-20">
+                                <div class="flex items-center gap-2 w-full">
+                                    <img src="/static/logo_rapi.png" alt="Logo" class="h-8 w-8 md:h-9 md:w-9 object-contain bg-white/15 p-1 rounded border border-amber-500/50">
+                                    <div>
+                                        <div id="displayFreqHeader" class="text-amber-300 font-bold box-text text-xs md:text-sm" data-base="11">RAPI 143.040 MHz</div>
+                                        <h1 class="font-extrabold text-white font-mono-custom box-text text-sm md:text-lg" data-base="18">QSL CARD</h1>
+                                        <div id="displayEvent" class="text-sky-200 italic box-text text-[10px] md:text-xs" data-base="10">Event: Rutin / Net Lokal</div>
                                     </div>
                                 </div>
-                                <div class="bg-white p-1 rounded border border-amber-500/40 hidden sm:block">
-                                    <img id="qrCodeImg" src="" alt="QR" class="w-12 h-12 md:w-14 md:h-14 object-contain">
+                            </div>
+
+                            <!-- 2. Kotak Stasiun -->
+                            <div id="box-station" class="draggable-box top-24 left-3 z-20 shadow-lg">
+                                <div class="text-sky-300 uppercase tracking-wider mb-0.5 box-text text-[10px] md:text-xs" data-base="10">CONFIRMING QSO WITH</div>
+                                <div id="displayCallsign" class="font-bold text-amber-300 font-mono-custom box-text text-base md:text-xl" data-base="22">CALLSIGN ANGGOTA</div>
+                                <div id="displayName" class="font-semibold text-white mt-0.5 box-text text-xs md:text-sm" data-base="15">NAMA ANGGOTA</div>
+                                <div id="displayAddress" class="text-slate-200 mt-0.5 leading-tight box-text text-[10px] md:text-xs" data-base="12">ALAMAT ANGGOTA</div>
+                            </div>
+
+                            <!-- 3. Kotak QSO & QR Code -->
+                            <div id="box-qso" class="draggable-box top-24 right-3 z-20 shadow-lg">
+                                <div class="flex items-center gap-3">
+                                    <div class="grid grid-cols-2 gap-1 font-mono-custom box-text text-[11px] md:text-xs flex-1" data-base="12">
+                                        <div><span class="text-sky-300">FREQ:</span> <strong id="displayFreqBox" class="text-amber-300">143.040</strong></div>
+                                        <div><span class="text-sky-300">RST:</span> <strong id="displayRst" class="text-white">59</strong></div>
+                                        <div><span class="text-sky-300">DATE:</span> <strong id="displayDate" class="text-white">-</strong></div>
+                                        <div><span class="text-sky-300">TIME:</span> <strong id="displayTime" class="text-white">-</strong></div>
+                                        <div class="col-span-2 pt-1 border-t border-slate-700">
+                                            <span class="text-sky-300">NCS:</span> <strong id="displayNcs" class="text-amber-300">JZ04MIB</strong>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white p-1 rounded border border-amber-500/40 hidden sm:block">
+                                        <img id="qrCodeImg" src="" alt="QR" class="w-12 h-12 md:w-14 md:h-14 object-contain">
+                                    </div>
+                                </div>
+                                <div id="imagePreviewContainer" class="mt-2 hidden">
+                                    <img id="userUploadedImage" src="" alt="Custom" class="h-8 md:h-10 w-full object-cover rounded border border-amber-500/40">
                                 </div>
                             </div>
-                            <div id="imagePreviewContainer" class="mt-2 hidden">
-                                <img id="userUploadedImage" src="" alt="Custom" class="h-8 md:h-10 w-full object-cover rounded border border-amber-500/40">
+
+                            <!-- 4. Footer -->
+                            <div id="box-footer" class="draggable-box bottom-2 left-3 flex justify-between items-end border-t border-slate-700/60 pt-1 z-20">
+                                <div>
+                                    <span class="text-sky-300 box-text text-[10px] md:text-xs" data-base="10">Dibuat Oleh :</span>
+                                    <div id="footerOpDisplay" class="text-white font-bold font-mono-custom box-text text-xs md:text-sm" data-base="13">JZ10IXM - DIAN HERMAWAN</div>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- 4. Footer -->
-                        <div id="box-footer" class="draggable-box bottom-2 left-3 flex justify-between items-end border-t border-slate-700/60 pt-1 z-20">
-                            <div>
-                                <span class="text-sky-300 box-text text-[10px] md:text-xs" data-base="10">Dibuat Oleh :</span>
-                                <div class="text-white font-bold font-mono-custom box-text text-xs md:text-sm" data-base="13">JZ10IXM - DIAN HERMAWAN</div>
+                        <!-- TAMPILAN SISI BELAKANG KARTU -->
+                        <div id="cardSideBack" class="w-full h-full relative hidden p-4 flex flex-col justify-between">
+                            <div class="border-b border-amber-500/40 pb-2 flex justify-between items-center">
+                                <h2 class="font-bold text-amber-300 font-mono-custom text-sm md:text-base">STATION INFORMATION & AWARDS</h2>
+                                <span class="text-xs text-slate-300 font-mono">QSL Manager: RAPI Ciamis</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 text-xs text-slate-200 my-auto">
+                                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700 space-y-1">
+                                    <div class="text-amber-400 font-bold">📍 Rig & Antena Setup</div>
+                                    <div>Rig: Dual Band VHF/UHF Transceiver</div>
+                                    <div>Antenna: Ground Plane / Yagiagi Directional</div>
+                                    <div>Grid Locator: OI32KC</div>
+                                </div>
+                                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700 space-y-1">
+                                    <div class="text-amber-400 font-bold">🤝 Catatan / Remarks</div>
+                                    <p class="text-[11px] italic text-slate-300">Terima kasih atas QSO yang berkesan. Harap balas QSL card ini via biro atau eQSL.</p>
+                                </div>
+                            </div>
+                            <div class="border-t border-slate-700 pt-2 text-center text-[10px] text-slate-400">
+                                73! Semoga sukses selalu dalam kegiatan amatir radio dan kemanusiaan.
                             </div>
                         </div>
 
@@ -449,7 +517,7 @@
                         </thead>
                         <tbody id="logTableBody">
                             <tr>
-                                <td colspan="10" class="p-4 text-center text-slate-500">Belum ada data QSO tercatat.</td>
+                                <td colspan="10" class="p-4 text-center text-slate-500">Belum ada data log QSO tercatat.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -458,7 +526,44 @@
 
         </div>
 
-        <!-- KONTEN TAB 2: ABOUT -->
+        <!-- KONTEN TAB 2: DEVELOPER LOG (PANEL PEMANTAU PENGGUNA) -->
+        <div id="contentDeveloper" class="hidden bg-slate-900 p-6 md:p-8 rounded-2xl shadow-xl border border-slate-800 space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-amber-400">📊 Panel Pemantau Pengguna (Developer Log)</h2>
+                    <p class="text-xs text-slate-400 mt-1">Daftar stasiun atau operator yang telah melakukan Check-In dan menggunakan aplikasi ini.</p>
+                </div>
+                <button onclick="exportOperatorLogCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow">
+                    📥 Ekspor Log Pengguna (CSV)
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto bg-slate-950 p-4 rounded-xl border border-slate-800">
+                <table class="w-full text-left text-xs text-slate-300 border-collapse">
+                    <thead>
+                        <tr class="bg-slate-800 text-amber-300 border-b border-slate-700">
+                            <th class="p-2.5">Waktu Check-In</th>
+                            <th class="p-2.5">Callsign Operator</th>
+                            <th class="p-2.5">Nama Operator</th>
+                            <th class="p-2.5">Status Sesi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="operatorLogTableBody">
+                        <tr>
+                            <td colspan="4" class="p-4 text-center text-slate-500">Belum ada data operator tercatat.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div>
+                <button onclick="switchTab('generator')" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold px-6 py-2.5 rounded-lg transition shadow">
+                    Kembali ke Generator ↩️
+                </button>
+            </div>
+        </div>
+
+        <!-- KONTEN TAB 3: ABOUT -->
         <div id="contentAbout" class="hidden bg-slate-900 p-6 md:p-8 rounded-2xl shadow-xl border border-slate-800 max-w-2xl mx-auto text-center space-y-6">
             <div class="inline-block bg-amber-500/10 border border-amber-500/30 p-4 rounded-full text-3xl">
                 👨‍💻
@@ -526,6 +631,105 @@
         let currentTZ = 'Asia/Jakarta';
         let currentZoneName = 'WIB';
         let qsoLogs = JSON.parse(localStorage.getItem('rapiQsoLogs') || '[]');
+        let operatorLogs = JSON.parse(localStorage.getItem('rapiOperatorLogs') || '[]');
+        let currentOperator = JSON.parse(localStorage.getItem('rapiCurrentOperator') || 'null');
+
+        // --- SISTEM CHECK-IN OPERATOR ---
+        window.addEventListener('DOMContentLoaded', () => {
+            if (currentOperator) {
+                document.getElementById('operatorModal').classList.add('hidden');
+                updateOperatorDisplay(currentOperator);
+            }
+            updateOperatorLogTable();
+        });
+
+        function submitOperatorCheckIn() {
+            const call = document.getElementById('opModalCall').value.trim().toUpperCase();
+            const name = document.getElementById('opModalName').value.trim().toUpperCase();
+            if (!call || !name) {
+                alert("Mohon masukkan Callsign dan Nama Anda terlebih dahulu!");
+                return;
+            }
+            const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+            currentOperator = { callsign: call, name: name, time: now };
+            localStorage.setItem('rapiCurrentOperator', JSON.stringify(currentOperator));
+            
+            // Simpan ke log riwayat operator (Developer record)
+            operatorLogs.unshift(currentOperator);
+            localStorage.setItem('rapiOperatorLogs', JSON.stringify(operatorLogs));
+
+            document.getElementById('operatorModal').classList.add('hidden');
+            updateOperatorDisplay(currentOperator);
+            updateOperatorLogTable();
+        }
+
+        function updateOperatorDisplay(op) {
+            document.getElementById('activeOpBadge').innerText = `Operator: ${op.callsign} (${op.name})`;
+            document.getElementById('footerOpDisplay').innerText = `${op.callsign} - ${op.name}`;
+            saveCurrentState();
+        }
+
+        function updateOperatorLogTable() {
+            const tbody = document.getElementById('operatorLogTableBody');
+            if (!tbody) return;
+            if (operatorLogs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">Belum ada data operator tercatat.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = "";
+            operatorLogs.forEach(op => {
+                tbody.innerHTML += `<tr class="border-b border-slate-800 hover:bg-slate-800/50">
+                    <td class="p-2.5 font-mono text-amber-300">${op.time}</td>
+                    <td class="p-2.5 font-bold text-amber-400">${op.callsign}</td>
+                    <td class="p-2.5">${op.name}</td>
+                    <td class="p-2.5"><span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-[10px]">Aktif / Terverifikasi</span></td>
+                </tr>`;
+            });
+        }
+
+        function exportOperatorLogCSV() {
+            if (operatorLogs.length === 0) { alert("Belum ada data operator!"); return; }
+            let csv = "data:text/csv;charset=utf-8,WaktuCheckIn,CallsignOperator,NamaOperator,Status\n";
+            operatorLogs.forEach(o => { csv += `"${o.time}",${o.callsign},"${o.name}",Aktif\n`; });
+            const link = document.createElement("a");
+            link.href = encodeURI(csv); link.download = `Log_Pengguna_Aplikasi.csv`;
+            document.body.appendChild(link); link.click(); link.remove();
+        }
+
+        // --- TEMA TERANG / GELAP (THEME SWITCHER) ---
+        function toggleTheme() {
+            const body = document.getElementById('appBody');
+            const themeText = document.getElementById('themeText');
+            if (body.classList.contains('bg-slate-950')) {
+                body.classList.remove('bg-slate-950', 'text-slate-100');
+                body.classList.add('bg-slate-100', 'text-slate-900');
+                themeText.innerText = "Gelap";
+            } else {
+                body.classList.remove('bg-slate-100', 'text-slate-900');
+                body.classList.add('bg-slate-950', 'text-slate-100');
+                themeText.innerText = "Terang";
+            }
+        }
+
+        // --- PENGALIH SISI KARTU (FRONT / BACK) ---
+        function switchCardSide(side) {
+            const front = document.getElementById('cardSideFront');
+            const back = document.getElementById('cardSideBack');
+            const btnFront = document.getElementById('btnSideFront');
+            const btnBack = document.getElementById('btnSideBack');
+
+            if (side === 'front') {
+                front.classList.remove('hidden');
+                back.classList.add('hidden');
+                btnFront.className = "bg-amber-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition shadow";
+                btnBack.className = "bg-slate-800 text-slate-300 hover:bg-slate-700 px-4 py-1.5 rounded-lg text-xs font-bold transition shadow";
+            } else {
+                front.classList.add('hidden');
+                back.classList.remove('hidden');
+                btnBack.className = "bg-amber-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition shadow";
+                btnFront.className = "bg-slate-800 text-slate-300 hover:bg-slate-700 px-4 py-1.5 rounded-lg text-xs font-bold transition shadow";
+            }
+        }
 
         const defaultDatabase = {
             "JZ10CAI": { name: "AGUS SYARIFUDIN", address: "Dusun. Sodong RT. 004/014 Desa Bojongmengger Kec. Cijeungjing" },
@@ -634,20 +838,27 @@
 
         function switchTab(tabName) {
             const genContent = document.getElementById('contentGenerator');
+            const devContent = document.getElementById('contentDeveloper');
             const aboutContent = document.getElementById('contentAbout');
+            
             const tabGenBtn = document.getElementById('tabGenerator');
+            const tabDevBtn = document.getElementById('tabDeveloper');
             const tabAboutBtn = document.getElementById('tabAbout');
+
+            [genContent, devContent, aboutContent].forEach(el => el.classList.add('hidden'));
+            [tabGenBtn, tabDevBtn, tabAboutBtn].forEach(btn => {
+                btn.className = "bg-slate-800 text-slate-300 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow";
+            });
 
             if (tabName === 'generator') {
                 genContent.classList.remove('hidden');
-                aboutContent.classList.add('hidden');
                 tabGenBtn.className = "bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow";
-                tabAboutBtn.className = "bg-slate-800 text-slate-300 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow";
-            } else {
-                genContent.classList.add('hidden');
+            } else if (tabName === 'developer') {
+                devContent.classList.remove('hidden');
+                tabDevBtn.className = "bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow";
+            } else if (tabName === 'about') {
                 aboutContent.classList.remove('hidden');
                 tabAboutBtn.className = "bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow";
-                tabGenBtn.className = "bg-slate-800 text-slate-300 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow";
             }
         }
 
@@ -722,15 +933,14 @@
             document.getElementById('qrCodeImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrText}`;
         }
 
-        // --- FITUR CEK CALLSIGN DI DATABASE ---
         function checkCallsignDatabase() {
             const cs = document.getElementById('targetCallsign').value.trim().toUpperCase();
             const statusEl = document.getElementById('checkStatus');
             const nameInput = document.getElementById('targetName');
             const addrInput = document.getElementById('targetAddress');
 
-            if (!cs) {
-                alert("Masukkan Callsign terlebih dahulu!");
+            if (!cs || cs === "CALLSIGN ANGGOTA") {
+                alert("Masukkan Callsign stasiun lawan terlebih dahulu!");
                 return;
             }
 
@@ -832,7 +1042,7 @@
             } else if (type === 'minimal') {
                 h.style.top = '10px'; h.style.left = '10px'; h.style.right = 'auto'; h.style.bottom = 'auto';
                 s.style.top = '90px'; h.style.left = '10px'; h.style.right = 'auto'; h.style.bottom = 'auto';
-                q.style.bottom = '10px'; q.style.right = '10px'; q.style.left = 'auto'; q.style.top = 'auto';
+                q.style.bottom = '10px'; q.style.right = '10px'; q.style.left = 'auto'; h.style.top = 'auto';
                 f.style.bottom = '10px'; f.style.left = '10px'; f.style.right = 'auto'; f.style.top = 'auto';
             }
             saveCurrentState();
@@ -1116,9 +1326,14 @@
         }
 
         function downloadCardImage() {
+            const call = document.getElementById('targetCallsign').value.trim();
+            if (!call || call === "CALLSIGN ANGGOTA") {
+                alert("Masukkan Callsign valid sebelum mengunduh kartu!");
+                return;
+            }
             html2canvas(document.getElementById('printable-card'), { scale: 3, useCORS: true, backgroundColor: "#0f172a" }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `QSL_Card_${document.getElementById('displayCallsign').innerText}.png`;
+                link.download = `QSL_Card_${call}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             });
@@ -1247,9 +1462,12 @@
             const timeVal = document.getElementById('timeInput').value;
             const statusInfo = document.getElementById('statusInfo');
 
-            if (!callsign) { alert("Masukkan Callsign terlebih dahulu!"); return; }
-            if (!name || !address) {
-                alert("Nama dan Alamat wajib diisi! Silakan tekan tombol 'Cek' atau ketik secara manual.");
+            if (!callsign || callsign === "CALLSIGN ANGGOTA") {
+                alert("Masukkan Callsign stasiun lawan terlebih dahulu!");
+                return;
+            }
+            if (!name || name === "NAMA ANGGOTA" || !address || address === "ALAMAT ANGGOTA") {
+                alert("Nama dan Alamat wajib diisi dengan benar! Tekan tombol 'Cek' atau ketik secara manual.");
                 return;
             }
 
