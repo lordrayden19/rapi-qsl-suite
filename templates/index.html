@@ -62,14 +62,14 @@
 <body id="appBody" class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-start p-2 md:p-4 transition-colors duration-300">
 
     <!-- Modal Check-In Operator / Pelacakan Pengguna untuk Pengembang -->
-    <div id="operatorModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div id="operatorModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border-2 border-amber-500 p-6 md:p-8 rounded-2xl shadow-2xl text-center max-w-md w-full space-y-4">
             <div class="text-4xl">📡</div>
             <h3 class="text-lg md:text-xl font-extrabold text-amber-400 font-mono-custom tracking-wide">
                 CHECK-IN OPERATOR / STASIUN
             </h3>
             <p class="text-xs text-slate-300">
-                Masukkan Callsign dan Nama Anda agar sistem dan pengembang mengetahui stasiun yang sedang menggunakan aplikasi ini.
+                Masukkan Callsign dan Nama Anda agar pengembang mengetahui stasiun yang sedang menggunakan aplikasi ini.
             </p>
             <div class="space-y-3 text-left">
                 <div>
@@ -110,7 +110,10 @@
             <div class="flex items-center gap-2">
                 <span class="text-xl">📡</span>
                 <h1 class="font-bold text-amber-400 text-sm md:text-lg">RAPI QSL Suite Pro</h1>
-                <span id="activeOpBadge" class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">Operator: -</span>
+                <div class="flex items-center gap-1.5 bg-amber-500/20 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+                    <span id="activeOpBadge" class="text-[10px] text-amber-300 font-semibold">Operator: -</span>
+                    <button onclick="operatorLogout()" class="text-[10px] bg-rose-600 hover:bg-rose-500 text-white px-2 py-0.5 rounded transition font-bold shadow" title="Keluar / Logout">🚪 Logout</button>
+                </div>
             </div>
             <div class="flex items-center gap-2">
                 <button onclick="toggleTheme()" id="themeToggleBtn" class="bg-slate-800 text-amber-400 px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow flex items-center gap-1">
@@ -141,23 +144,26 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">Callsign Lawan</label>
                         <div class="flex gap-1">
-                            <input type="text" id="targetCallsign" placeholder="CALLSIGN ANGGOTA" value="CALLSIGN ANGGOTA" oninput="saveCurrentState()"
-                                   class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
-                            <button onclick="checkCallsignDatabase()" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-2 rounded-lg text-xs font-semibold transition shadow whitespace-nowrap">
+                            <input type="text" id="targetCallsign" placeholder="CONTOH: JZ10IXM" value="" oninput="saveCurrentState()"
+                                   class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase placeholder:text-white/40 placeholder:italic focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
+                            <button onclick="checkCallsignDatabase()" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-2 rounded-lg text-xs font-semibold transition shadow whitespace-nowrap" title="Cek Database Lokal">
                                 🔍 Cek
                             </button>
+                            <a href="https://iar-ikrap.postel.go.id/" target="_blank" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-lg text-xs font-semibold transition shadow whitespace-nowrap flex items-center gap-1" title="Buka IAR-IKRAP Postel Resmi">
+                                🌐 Postel
+                            </a>
                         </div>
                         <div id="checkStatus" class="text-[10px] mt-1 text-slate-400">Tekan tombol Cek untuk verifikasi database.</div>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">Nama Lengkap (Stasiun Lawan)</label>
-                        <input type="text" id="targetName" placeholder="NAMA ANGGOTA" value="NAMA ANGGOTA" oninput="saveCurrentState()"
-                               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
+                        <input type="text" id="targetName" placeholder="NAMA LENGKAP" value="" oninput="saveCurrentState()"
+                               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase placeholder:text-white/40 placeholder:italic focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                     </div>
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-medium text-slate-300 mb-1">Alamat / KRAP / Wilayah</label>
-                        <input type="text" id="targetAddress" placeholder="ALAMAT ANGGOTA" value="ALAMAT ANGGOTA" oninput="saveCurrentState()"
-                               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
+                        <input type="text" id="targetAddress" placeholder="ALAMAT / KRAP / WILAYAH" value="" oninput="saveCurrentState()"
+                               class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder:text-white/40 placeholder:italic focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                     </div>
                 </div>
 
@@ -313,11 +319,11 @@
                                 </div>
                             </div>
 
-                            <!-- 4. Footer -->
+                            <!-- 4. Footer (Permanen JZ10IXM - DIAN HERMAWAN) -->
                             <div id="box-footer" class="draggable-box bottom-2 left-3 flex justify-between items-end border-t border-slate-700/60 pt-1 z-20">
                                 <div>
                                     <span class="text-sky-300 box-text text-[10px] md:text-xs" data-base="10">Dibuat Oleh :</span>
-                                    <div id="footerOpDisplay" class="text-white font-bold font-mono-custom box-text text-xs md:text-sm" data-base="13">JZ10IXM - DIAN HERMAWAN</div>
+                                    <div class="text-white font-bold font-mono-custom box-text text-xs md:text-sm" data-base="13">JZ10IXM - DIAN HERMAWAN</div>
                                 </div>
                             </div>
                         </div>
@@ -332,7 +338,7 @@
                                 <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700 space-y-1">
                                     <div class="text-amber-400 font-bold">📍 Rig & Antena Setup</div>
                                     <div>Rig: Dual Band VHF/UHF Transceiver</div>
-                                    <div>Antenna: Ground Plane / Yagiagi Directional</div>
+                                    <div>Antenna: Ground Plane / Yagi Directional</div>
                                     <div>Grid Locator: OI32KC</div>
                                 </div>
                                 <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700 space-y-1">
@@ -528,14 +534,19 @@
 
         <!-- KONTEN TAB 2: DEVELOPER LOG (PANEL PEMANTAU PENGGUNA) -->
         <div id="contentDeveloper" class="hidden bg-slate-900 p-6 md:p-8 rounded-2xl shadow-xl border border-slate-800 space-y-6">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+            <div class="flex flex-wrap justify-between items-center border-b border-slate-800 pb-4 gap-2">
                 <div>
                     <h2 class="text-xl font-bold text-amber-400">📊 Panel Pemantau Pengguna (Developer Log)</h2>
                     <p class="text-xs text-slate-400 mt-1">Daftar stasiun atau operator yang telah melakukan Check-In dan menggunakan aplikasi ini.</p>
                 </div>
-                <button onclick="exportOperatorLogCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow">
-                    📥 Ekspor Log Pengguna (CSV)
-                </button>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="exportOperatorLogCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow">
+                        📥 Ekspor CSV
+                    </button>
+                    <button onclick="clearAllOperatorLogs()" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow">
+                        🗑️ Hapus Semua Log Pengguna
+                    </button>
+                </div>
             </div>
             
             <div class="overflow-x-auto bg-slate-950 p-4 rounded-xl border border-slate-800">
@@ -546,11 +557,12 @@
                             <th class="p-2.5">Callsign Operator</th>
                             <th class="p-2.5">Nama Operator</th>
                             <th class="p-2.5">Status Sesi</th>
+                            <th class="p-2.5 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="operatorLogTableBody">
                         <tr>
-                            <td colspan="4" class="p-4 text-center text-slate-500">Belum ada data operator tercatat.</td>
+                            <td colspan="5" class="p-4 text-center text-slate-500">Belum ada data operator tercatat.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -634,11 +646,13 @@
         let operatorLogs = JSON.parse(localStorage.getItem('rapiOperatorLogs') || '[]');
         let currentOperator = JSON.parse(localStorage.getItem('rapiCurrentOperator') || 'null');
 
-        // --- SISTEM CHECK-IN OPERATOR ---
+        // --- SISTEM CHECK-IN & LOGOUT OPERATOR ---
         window.addEventListener('DOMContentLoaded', () => {
             if (currentOperator) {
                 document.getElementById('operatorModal').classList.add('hidden');
                 updateOperatorDisplay(currentOperator);
+            } else {
+                document.getElementById('operatorModal').classList.remove('hidden');
             }
             updateOperatorLogTable();
         });
@@ -654,7 +668,6 @@
             currentOperator = { callsign: call, name: name, time: now };
             localStorage.setItem('rapiCurrentOperator', JSON.stringify(currentOperator));
             
-            // Simpan ke log riwayat operator (Developer record)
             operatorLogs.unshift(currentOperator);
             localStorage.setItem('rapiOperatorLogs', JSON.stringify(operatorLogs));
 
@@ -663,26 +676,78 @@
             updateOperatorLogTable();
         }
 
+        function operatorLogout() {
+            if (confirm("Apakah Anda yakin ingin keluar (logout) dari sesi operator ini?")) {
+                localStorage.removeItem('rapiCurrentOperator');
+                currentOperator = null;
+                document.getElementById('opModalCall').value = '';
+                document.getElementById('opModalName').value = '';
+                document.getElementById('operatorModal').classList.remove('hidden');
+                document.getElementById('activeOpBadge').innerText = 'Operator: -';
+            }
+        }
+
         function updateOperatorDisplay(op) {
             document.getElementById('activeOpBadge').innerText = `Operator: ${op.callsign} (${op.name})`;
-            document.getElementById('footerOpDisplay').innerText = `${op.callsign} - ${op.name}`;
             saveCurrentState();
+        }
+
+        // --- AUTENTIKASI DEVELOPER UNTUK MENGHAPUS LOG PENGGUNA ---
+        function verifyDeveloperAuth() {
+            const call = prompt("Masukkan Callsign Pengembang:", "").trim().toUpperCase();
+            if (call !== "JZ10IXM") {
+                alert("Callsign pengembang tidak valid!");
+                return false;
+            }
+            const pass = prompt("Masukkan Password Pengembang:", "");
+            if (pass !== "zjoezha") {
+                alert("Password pengembang salah!");
+                return false;
+            }
+            return true;
+        }
+
+        function deleteOperatorLog(index) {
+            if (!verifyDeveloperAuth()) return;
+            if (confirm("Hapus data log operator ini?")) {
+                operatorLogs.splice(index, 1);
+                localStorage.setItem('rapiOperatorLogs', JSON.stringify(operatorLogs));
+                updateOperatorLogTable();
+                alert("Log operator berhasil dihapus.");
+            }
+        }
+
+        function clearAllOperatorLogs() {
+            if (operatorLogs.length === 0) {
+                alert("Belum ada log operator untuk dihapus.");
+                return;
+            }
+            if (!verifyDeveloperAuth()) return;
+            if (confirm("PERINGATAN: Apakah Anda yakin ingin MENGHAPUS SEMUA log riwayat pengguna aplikasi?")) {
+                operatorLogs = [];
+                localStorage.setItem('rapiOperatorLogs', JSON.stringify(operatorLogs));
+                updateOperatorLogTable();
+                alert("Semua log riwayat pengguna berhasil dikosongkan.");
+            }
         }
 
         function updateOperatorLogTable() {
             const tbody = document.getElementById('operatorLogTableBody');
             if (!tbody) return;
             if (operatorLogs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">Belum ada data operator tercatat.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">Belum ada data operator tercatat.</td></tr>`;
                 return;
             }
             tbody.innerHTML = "";
-            operatorLogs.forEach(op => {
+            operatorLogs.forEach((op, index) => {
                 tbody.innerHTML += `<tr class="border-b border-slate-800 hover:bg-slate-800/50">
                     <td class="p-2.5 font-mono text-amber-300">${op.time}</td>
                     <td class="p-2.5 font-bold text-amber-400">${op.callsign}</td>
                     <td class="p-2.5">${op.name}</td>
                     <td class="p-2.5"><span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-[10px]">Aktif / Terverifikasi</span></td>
+                    <td class="p-2.5 text-center">
+                        <button onclick="deleteOperatorLog(${index})" class="bg-rose-600 hover:bg-rose-500 text-white px-2 py-1 rounded text-[10px] transition font-semibold">Hapus</button>
+                    </td>
                 </tr>`;
             });
         }
@@ -939,7 +1004,7 @@
             const nameInput = document.getElementById('targetName');
             const addrInput = document.getElementById('targetAddress');
 
-            if (!cs || cs === "CALLSIGN ANGGOTA") {
+            if (!cs) {
                 alert("Masukkan Callsign stasiun lawan terlebih dahulu!");
                 return;
             }
@@ -1032,18 +1097,18 @@
             if (type === 'classic') {
                 h.style.top = '12px'; h.style.left = '12px'; h.style.right = 'auto'; h.style.bottom = 'auto';
                 s.style.top = '100px'; s.style.left = '12px'; s.style.right = 'auto'; s.style.bottom = 'auto';
-                q.style.top = '100px'; q.style.right = '12px'; q.style.left = 'auto'; q.style.bottom = 'auto';
+                q.style.top = '100px'; q.style.right = '12px'; q.style.left = 'auto'; h.style.bottom = 'auto';
                 f.style.bottom = '12px'; f.style.left = '12px'; f.style.right = 'auto'; f.style.top = 'auto';
             } else if (type === 'modern') {
                 h.style.top = '15px'; h.style.left = '20px'; h.style.right = 'auto'; h.style.bottom = 'auto';
                 s.style.top = '110px'; s.style.left = '20px'; h.style.right = 'auto'; h.style.bottom = 'auto';
                 q.style.top = '15px'; q.style.right = '20px'; q.style.left = 'auto'; h.style.bottom = 'auto';
-                f.style.bottom = '15px'; f.style.right = '20px'; f.style.left = 'auto'; h.style.top = 'auto';
+                f.style.bottom = '15px'; f.style.right = '20px'; f.style.left = 'auto'; f.style.top = 'auto';
             } else if (type === 'minimal') {
                 h.style.top = '10px'; h.style.left = '10px'; h.style.right = 'auto'; h.style.bottom = 'auto';
                 s.style.top = '90px'; h.style.left = '10px'; h.style.right = 'auto'; h.style.bottom = 'auto';
                 q.style.bottom = '10px'; q.style.right = '10px'; q.style.left = 'auto'; h.style.top = 'auto';
-                f.style.bottom = '10px'; f.style.left = '10px'; f.style.right = 'auto'; f.style.top = 'auto';
+                f.style.bottom = '10px'; f.style.left = '10px'; h.style.right = 'auto'; h.style.top = 'auto';
             }
             saveCurrentState();
             alert(`Preset tata letak "${type}" diterapkan!`);
@@ -1260,7 +1325,7 @@
             let isDragging = false, startX, startY, initialX, initialY;
 
             box.addEventListener('pointerdown', (e) => {
-                if (['BUTTON', 'INPUT', 'IMG'].includes(e.target.tagName)) return;
+                if (['BUTTON', 'INPUT', 'IMG', 'A'].includes(e.target.tagName)) return;
                 isDragging = true;
                 startX = e.clientX; startY = e.clientY;
                 const rect = box.getBoundingClientRect();
@@ -1327,7 +1392,7 @@
 
         function downloadCardImage() {
             const call = document.getElementById('targetCallsign').value.trim();
-            if (!call || call === "CALLSIGN ANGGOTA") {
+            if (!call) {
                 alert("Masukkan Callsign valid sebelum mengunduh kartu!");
                 return;
             }
@@ -1462,11 +1527,11 @@
             const timeVal = document.getElementById('timeInput').value;
             const statusInfo = document.getElementById('statusInfo');
 
-            if (!callsign || callsign === "CALLSIGN ANGGOTA") {
+            if (!callsign) {
                 alert("Masukkan Callsign stasiun lawan terlebih dahulu!");
                 return;
             }
-            if (!name || name === "NAMA ANGGOTA" || !address || address === "ALAMAT ANGGOTA") {
+            if (!name || !address) {
                 alert("Nama dan Alamat wajib diisi dengan benar! Tekan tombol 'Cek' atau ketik secara manual.");
                 return;
             }
