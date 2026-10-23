@@ -293,9 +293,9 @@
                             <!-- 2. Kotak Stasiun -->
                             <div id="box-station" class="draggable-box top-24 left-3 z-20 shadow-lg">
                                 <div class="text-sky-300 uppercase tracking-wider mb-0.5 box-text text-[10px] md:text-xs" data-base="10">CONFIRMING QSO WITH</div>
-                                <div id="displayCallsign" class="font-bold text-amber-300 font-mono-custom box-text text-base md:text-xl" data-base="22">CALLSIGN ANGGOTA</div>
-                                <div id="displayName" class="font-semibold text-white mt-0.5 box-text text-xs md:text-sm" data-base="15">NAMA ANGGOTA</div>
-                                <div id="displayAddress" class="text-slate-200 mt-0.5 leading-tight box-text text-[10px] md:text-xs" data-base="12">ALAMAT ANGGOTA</div>
+                                <div id="displayCallsign" class="font-bold text-amber-300 font-mono-custom box-text text-base md:text-xl" data-base="22">-</div>
+                                <div id="displayName" class="font-semibold text-white mt-0.5 box-text text-xs md:text-sm" data-base="15">-</div>
+                                <div id="displayAddress" class="text-slate-200 mt-0.5 leading-tight box-text text-[10px] md:text-xs" data-base="12">-</div>
                             </div>
 
                             <!-- 3. Kotak QSO & QR Code -->
@@ -532,7 +532,7 @@
 
         </div>
 
-        <!-- KONTEN TAB 2: DEVELOPER LOG (PANEL PEMANTAU PENGGUNA) -->
+        <!-- KONTEN TAB 2: DEVELOPER LOG (PANEL PEMANTAU PENGGUNA) - PROTECTED -->
         <div id="contentDeveloper" class="hidden bg-slate-900 p-6 md:p-8 rounded-2xl shadow-xl border border-slate-800 space-y-6">
             <div class="flex flex-wrap justify-between items-center border-b border-slate-800 pb-4 gap-2">
                 <div>
@@ -692,9 +692,9 @@
             saveCurrentState();
         }
 
-        // --- AUTENTIKASI DEVELOPER UNTUK MENGHAPUS LOG PENGGUNA ---
+        // --- AUTENTIKASI DEVELOPER UNTUK AKSES & HAPUS LOG PENGGUNA ---
         function verifyDeveloperAuth() {
-            const call = prompt("Masukkan Callsign Pengembang:", "").trim().toUpperCase();
+            const call = prompt("🔒 Akses Terbatas Developer\nMasukkan Callsign Pengembang:", "").trim().toUpperCase();
             if (call !== "JZ10IXM") {
                 alert("Callsign pengembang tidak valid!");
                 return false;
@@ -754,6 +754,7 @@
 
         function exportOperatorLogCSV() {
             if (operatorLogs.length === 0) { alert("Belum ada data operator!"); return; }
+            if (!verifyDeveloperAuth()) return;
             let csv = "data:text/csv;charset=utf-8,WaktuCheckIn,CallsignOperator,NamaOperator,Status\n";
             operatorLogs.forEach(o => { csv += `"${o.time}",${o.callsign},"${o.name}",Aktif\n`; });
             const link = document.createElement("a");
@@ -910,6 +911,13 @@
             const tabDevBtn = document.getElementById('tabDeveloper');
             const tabAboutBtn = document.getElementById('tabAbout');
 
+            // Proteksi Khusus Tab Developer: Hanya bisa dibuka jika terautentikasi sebagai developer
+            if (tabName === 'developer') {
+                if (!verifyDeveloperAuth()) {
+                    return; // Batalkan perpindahan tab jika gagal verifikasi
+                }
+            }
+
             [genContent, devContent, aboutContent].forEach(el => el.classList.add('hidden'));
             [tabGenBtn, tabDevBtn, tabAboutBtn].forEach(btn => {
                 btn.className = "bg-slate-800 text-slate-300 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow";
@@ -921,6 +929,7 @@
             } else if (tabName === 'developer') {
                 devContent.classList.remove('hidden');
                 tabDevBtn.className = "bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow";
+                updateOperatorLogTable();
             } else if (tabName === 'about') {
                 aboutContent.classList.remove('hidden');
                 tabAboutBtn.className = "bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow";
