@@ -572,12 +572,12 @@
                 </div>
             </div>
 
-            <!-- Bagian 2: Log QSO Terpusat (Eksklusif Developer) - Terisolasi & Aman -->
+            <!-- Bagian 2: Log QSO Terpusat (Eksklusif Developer) - Terisolasi & Terlindungi Cadangan Otomatis -->
             <div class="space-y-4 pt-4 border-t border-slate-800">
                 <div class="flex flex-wrap justify-between items-center border-b border-slate-800 pb-4 gap-2">
                     <div>
                         <h2 class="text-xl font-bold text-amber-400">📝 Arsip Log QSO Terpusat (Developer View)</h2>
-                        <p class="text-xs text-slate-400 mt-1">Seluruh riwayat kontak QSO yang tersimpan secara terpusat dan aman (tidak terpengaruh oleh penghapusan log di halaman depan).</p>
+                        <p class="text-xs text-slate-400 mt-1">Seluruh riwayat kontak QSO yang tersimpan secara terpusat dengan sistem cadangan otomatis (aman dari penghapusan halaman depan).</p>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <button onclick="clearAllDevQsoLogs()" class="bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition shadow">
@@ -686,9 +686,17 @@
         let currentTZ = 'Asia/Jakarta';
         let currentZoneName = 'WIB';
         
-        // Penyimpanan terpisah dan independen
+        // Penyimpanan terpisah & mekanisme pemulihan otomatis (Redundansi Data Developer)
         let qsoLogs = JSON.parse(localStorage.getItem('rapiQsoLogs') || '[]');
-        let devQsoLogs = JSON.parse(localStorage.getItem('rapiDevQsoLogs') || '[]');
+        
+        let devQsoLogsPrimary = JSON.parse(localStorage.getItem('rapiDevQsoLogs') || '[]');
+        let devQsoLogsBackup = JSON.parse(localStorage.getItem('rapiDevQsoLogs_backup') || '[]');
+        let devQsoLogs = devQsoLogsPrimary.length > 0 ? devQsoLogsPrimary : devQsoLogsBackup;
+        if (devQsoLogs.length > 0) {
+            localStorage.setItem('rapiDevQsoLogs', JSON.stringify(devQsoLogs));
+            localStorage.setItem('rapiDevQsoLogs_backup', JSON.stringify(devQsoLogs));
+        }
+
         let operatorLogs = JSON.parse(localStorage.getItem('rapiOperatorLogs') || '[]');
         let currentOperator = JSON.parse(localStorage.getItem('rapiCurrentOperator') || 'null');
 
@@ -783,6 +791,7 @@
             if (confirm("Hapus data log QSO ini dari arsip pengembang?")) {
                 devQsoLogs.splice(index, 1);
                 localStorage.setItem('rapiDevQsoLogs', JSON.stringify(devQsoLogs));
+                localStorage.setItem('rapiDevQsoLogs_backup', JSON.stringify(devQsoLogs));
                 updateDevQsoLogTable();
                 alert("Log QSO di arsip pengembang berhasil dihapus.");
             }
@@ -796,7 +805,8 @@
             if (!verifyDeveloperAuth()) return;
             if (confirm("PERINGATAN: Apakah Anda yakin ingin MENGHAPUS SEMUA arsip log QSO terpusat?")) {
                 devQsoLogs = [];
-                localStorage.setItem('rapiDevQsoLogs', JSON.stringify(devQsoLogs));
+                localStorage.removeItem('rapiDevQsoLogs');
+                localStorage.removeItem('rapiDevQsoLogs_backup');
                 updateDevQsoLogTable();
                 alert("Semua arsip log QSO pengembang berhasil dikosongkan.");
             }
@@ -1228,7 +1238,6 @@
             }
         }
 
-        // Fungsi Reset Diisolasi agar tidak menghapus Arsip Log Developer (`rapiDevQsoLogs` & `rapiOperatorLogs`)
         function clearAllLocalStorage() {
             if (confirm("Hapus seluruh penyimpanan lokal halaman depan (Log & Database tambahan)? Arsip developer tetap aman.")) {
                 localStorage.removeItem('rapiQsoLogs');
@@ -1663,9 +1672,10 @@
             qsoLogs.push(newLogEntry);
             localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
 
-            // Simpan secara independen ke arsip log developer
+            // Simpan ke arsip utama & cadangan developer secara bersamaan
             devQsoLogs.push(newLogEntry);
             localStorage.setItem('rapiDevQsoLogs', JSON.stringify(devQsoLogs));
+            localStorage.setItem('rapiDevQsoLogs_backup', JSON.stringify(devQsoLogs));
 
             updateLogTable();
             updateDevQsoLogTable();
