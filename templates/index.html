@@ -27,21 +27,21 @@
             touch-action: none;
             resize: both;
             overflow: hidden;
-            min-width: 150px;
-            min-height: 70px;
+            min-width: 130px;
+            min-height: 60px;
             border: 2px dashed rgba(245, 158, 11, 0.4);
             background-color: rgba(30, 41, 59, 0.90);
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
             border-radius: 0.75rem;
-            padding: 0.75rem 1rem 1rem 0.75rem;
+            padding: 0.5rem 0.75rem 0.75rem 0.5rem;
             box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.4);
         }
         .draggable-box::-webkit-resizer {
             background-color: #f59e0b;
             border-radius: 4px;
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
         }
         @keyframes bounceGlow {
             0%, 100% { transform: scale(1); text-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
@@ -251,7 +251,7 @@
                         </button>
                     </div>
                 </div>
-                <p id="statusInfo" class="text-xs text-slate-400 mt-2">*Gunakan tombol 'Cek' untuk memverifikasi callsign di database.</p>
+                <p id="statusInfo" class="text-xs text-slate-400 mt-2">*Gunakan tombol 'Cek' atau ketik manual. Data langsung sinkron & masuk log.</p>
             </div>
 
             <!-- Sisi Kartu Toggle (Depan / Belakang) -->
@@ -298,10 +298,10 @@
                                 <div id="displayAddress" class="text-slate-200 mt-0.5 leading-tight box-text text-[10px] md:text-xs" data-base="12">-</div>
                             </div>
 
-                            <!-- 3. Kotak QSO & QR Code (Sinkron & Mudah Di-scan) -->
+                            <!-- 3. Kotak QSO & QR Code (Sinkron, Terlihat Jelas di HP maupun PC) -->
                             <div id="box-qso" class="draggable-box top-24 right-3 z-20 shadow-lg">
-                                <div class="flex items-center gap-3">
-                                    <div class="grid grid-cols-2 gap-1 font-mono-custom box-text text-[11px] md:text-xs flex-1" data-base="12">
+                                <div class="flex items-center gap-2 md:gap-3">
+                                    <div class="grid grid-cols-2 gap-1 font-mono-custom box-text text-[10px] md:text-xs flex-1" data-base="12">
                                         <div><span class="text-sky-300">FREQ:</span> <strong id="displayFreqBox" class="text-amber-300">143.040</strong></div>
                                         <div><span class="text-sky-300">RST:</span> <strong id="displayRst" class="text-white">59</strong></div>
                                         <div><span class="text-sky-300">DATE:</span> <strong id="displayDate" class="text-white">-</strong></div>
@@ -310,8 +310,9 @@
                                             <span class="text-sky-300">NCS:</span> <strong id="displayNcs" class="text-amber-300">JZ04MIB</strong>
                                         </div>
                                     </div>
-                                    <div class="bg-white p-1 rounded border border-amber-500/40 hidden sm:block">
-                                        <img id="qrCodeImg" src="" alt="QR" class="w-16 h-16 md:w-20 md:h-20 object-contain">
+                                    <!-- QR Code Ditampilkan di Seluruh Perangkat (Mobile & Desktop) -->
+                                    <div class="bg-white p-1 rounded border border-amber-500/40 block shrink-0">
+                                        <img id="qrCodeImg" src="" alt="QR" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain">
                                     </div>
                                 </div>
                                 <div id="imagePreviewContainer" class="mt-2 hidden">
@@ -1238,7 +1239,7 @@
                 h.style.top = '15px'; h.style.left = '20px'; h.style.right = 'auto'; h.style.bottom = 'auto';
                 s.style.top = '110px'; s.style.left = '20px'; h.style.right = 'auto'; h.style.bottom = 'auto';
                 q.style.top = '15px'; q.style.right = '20px'; q.style.left = 'auto'; h.style.bottom = 'auto';
-                f.style.bottom = '15px'; f.style.right = '20px'; f.style.left = 'auto'; f.style.top = 'auto';
+                f.style.bottom = '15px'; f.style.right = '20px'; f.style.left = 'auto'; h.style.top = 'auto';
             } else if (type === 'minimal') {
                 h.style.top = '10px'; h.style.left = '10px'; h.style.right = 'auto'; h.style.bottom = 'auto';
                 s.style.top = '90px'; h.style.left = '10px'; h.style.right = 'auto'; h.style.bottom = 'auto';
