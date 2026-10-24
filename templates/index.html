@@ -1696,7 +1696,6 @@
                     <td class="p-2">${log.ncs}</td>
                     <td class="p-2 italic">${log.event}</td>
                     <td class="p-2 text-center flex justify-center gap-1 action-col">
-                        <button onclick="loadLogToCard(${originalIndex})" class="bg-sky-600 text-white px-2 py-1 rounded text-[10px]" title="Tampilkan ke Kartu">👁️ Muat</button>
                         <button onclick="downloadLogCard(${originalIndex})" class="bg-purple-600 text-white px-2 py-1 rounded text-[10px]" title="Unduh QSL">📥 QSL</button>
                         <button onclick="shareToWhatsApp(${originalIndex})" class="bg-emerald-600 text-white px-2 py-1 rounded text-[10px]" title="Kirim WhatsApp">WA</button>
                         <button onclick="deleteLogItem(${originalIndex})" class="bg-rose-600 text-white px-2 py-1 rounded text-[10px]" title="Hapus">Hapus</button>
@@ -1705,7 +1704,7 @@
             });
         }
 
-        // Fungsi untuk Memuat Data Log dari Tabel ke QSL Card & Form Input Secara Sinkron
+        // Fungsi Memuat Data Log secara Seamless (Tanpa Auto-Scroll ke Atas) dan Otomatis Unduh QSL
         function loadLogToCard(index) {
             const log = qsoLogs[index];
             if (!log) return;
@@ -1720,7 +1719,7 @@
             document.getElementById('timeInput').value = log.time;
 
             syncInputToCard();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // window.scrollTo dihapus agar halaman tetap di posisinya (tidak bikin pusing)
         }
 
         function downloadLogCard(index) {
