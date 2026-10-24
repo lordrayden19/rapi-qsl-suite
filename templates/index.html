@@ -298,7 +298,7 @@
                                 <div id="displayAddress" class="text-slate-200 mt-0.5 leading-tight box-text text-[10px] md:text-xs" data-base="12">-</div>
                             </div>
 
-                            <!-- 3. Kotak QSO & QR Code -->
+                            <!-- 3. Kotak QSO & QR Code (Diperbesar ukurannya agar mudah di-scan) -->
                             <div id="box-qso" class="draggable-box top-24 right-3 z-20 shadow-lg">
                                 <div class="flex items-center gap-3">
                                     <div class="grid grid-cols-2 gap-1 font-mono-custom box-text text-[11px] md:text-xs flex-1" data-base="12">
@@ -311,7 +311,7 @@
                                         </div>
                                     </div>
                                     <div class="bg-white p-1 rounded border border-amber-500/40 hidden sm:block">
-                                        <img id="qrCodeImg" src="" alt="QR" class="w-12 h-12 md:w-14 md:h-14 object-contain">
+                                        <img id="qrCodeImg" src="" alt="QR" class="w-16 h-16 md:w-20 md:h-20 object-contain">
                                     </div>
                                 </div>
                                 <div id="imagePreviewContainer" class="mt-2 hidden">
@@ -686,15 +686,11 @@
         let currentTZ = 'Asia/Jakarta';
         let currentZoneName = 'WIB';
         
-        // Log halaman depan tetap di local storage perangkat
         let qsoLogs = JSON.parse(localStorage.getItem('rapiQsoLogs') || '[]');
-        
-        // Log Developer & Operator kini menggunakan Server API (Global lintas perangkat)
         let devQsoLogs = [];
         let operatorLogs = [];
         let currentOperator = JSON.parse(localStorage.getItem('rapiCurrentOperator') || 'null');
 
-        // Fungsi Sinkronisasi Data dengan Server Backend
         async function fetchServerLogs() {
             try {
                 const response = await fetch('/api/logs');
@@ -722,7 +718,6 @@
             }
         }
 
-        // --- SISTEM CHECK-IN & LOGOUT OPERATOR ---
         window.addEventListener('DOMContentLoaded', async () => {
             await fetchServerLogs();
             if (currentOperator) {
@@ -768,7 +763,6 @@
             saveCurrentState();
         }
 
-        // --- AUTENTIKASI DEVELOPER UNTUK AKSES & HAPUS LOG ---
         function verifyDeveloperAuth() {
             const call = prompt("🔒 Akses Terbatas Developer\nMasukkan Callsign Pengembang:", "").trim().toUpperCase();
             if (call !== "JZ10IXM") {
@@ -888,7 +882,6 @@
             document.body.appendChild(link); link.click(); link.remove();
         }
 
-        // --- TEMA TERANG / GELAP (THEME SWITCHER) ---
         function toggleTheme() {
             const body = document.getElementById('appBody');
             const themeText = document.getElementById('themeText');
@@ -903,7 +896,6 @@
             }
         }
 
-        // --- PENGALIH SISI KARTU (FRONT / BACK) ---
         function switchCardSide(side) {
             const front = document.getElementById('cardSideFront');
             const back = document.getElementById('cardSideBack');
@@ -1037,10 +1029,9 @@
             const tabDevBtn = document.getElementById('tabDeveloper');
             const tabAboutBtn = document.getElementById('tabAbout');
 
-            // Proteksi Khusus Tab Developer: Hanya bisa dibuka jika terautentikasi sebagai developer
             if (tabName === 'developer') {
                 if (!verifyDeveloperAuth()) {
-                    return; // Batalkan perpindahan tab jika gagal verifikasi
+                    return;
                 }
             }
 
@@ -1122,15 +1113,17 @@
             const ncs = document.getElementById('ncsInput').value.trim();
             const event = document.getElementById('eventInput').value.trim();
 
-            const text = `📡 *KONfirmasi QSO RAPI* 📡\n` +
-                         `----------------------------------\n` +
-                         `Callsign: *${call}* (${name})\n` +
+            // Data teks diringkas tanpa emoji dan simbol berat agar QR Code lebih longgar & mudah dibaca kamera
+            const text = `QSO CONFIRMATION RAPI\n` +
+                         `Call: ${call} (${name})\n` +
                          `Freq: ${freq} MHz | RST: ${rst}\n` +
-                         `Waktu: ${date} ${time}\n` +
-                         `NCS: ${ncs} | Event: ${event}\n` +
-                         `---------------------------------`;
+                         `Time: ${date} ${time}\n` +
+                         `NCS: ${ncs} | Event: ${event}`;
+                         
             const qrText = encodeURIComponent(text);
-            document.getElementById('qrCodeImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrText}`;
+            
+            // Resolusi API ditingkatkan ke 300x300 agar tajam saat dicetak dan mudah di-scan
+            document.getElementById('qrCodeImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${qrText}`;
         }
 
         function checkCallsignDatabase() {
@@ -1457,7 +1450,6 @@
             reader.readAsText(file);
         }
 
-        // Penanganan Sentuhan Jari (Touch/Pointer) untuk HP & PC
         document.querySelectorAll('.draggable-box').forEach(box => {
             let isDragging = false, startX, startY, initialX, initialY;
 
@@ -1686,11 +1678,9 @@
 
             const newLogEntry = { date: dateVal, time: timeVal, callsign: callsignInput, freq, name, address, rst: rst || "59", ncs: ncs || "-", event: eventName };
             
-            // Simpan ke log lokal halaman depan
             qsoLogs.push(newLogEntry);
             localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
 
-            // Simpan otomatis ke server agar langsung masuk ke arsip developer global
             devQsoLogs.push(newLogEntry);
             await saveServerLogs();
 
