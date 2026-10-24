@@ -144,7 +144,7 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">Callsign Lawan</label>
                         <div class="flex gap-1">
-                            <input type="text" id="targetCallsign" placeholder="CONTOH: JZ10IXM" value="" oninput="saveCurrentState()"
+                            <input type="text" id="targetCallsign" placeholder="CONTOH: JZ10IXM" value="" oninput="syncInputToCard()"
                                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase placeholder:text-white/40 placeholder:italic focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                             <button onclick="checkCallsignDatabase()" class="bg-sky-600 hover:bg-sky-500 text-white px-3 py-2 rounded-lg text-xs font-semibold transition shadow whitespace-nowrap" title="Cek Database Lokal">
                                 🔍 Cek
@@ -157,12 +157,12 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">Nama Lengkap (Stasiun Lawan)</label>
-                        <input type="text" id="targetName" placeholder="NAMA LENGKAP" value="" oninput="saveCurrentState()"
+                        <input type="text" id="targetName" placeholder="NAMA LENGKAP" value="" oninput="syncInputToCard()"
                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase placeholder:text-white/40 placeholder:italic focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                     </div>
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-medium text-slate-300 mb-1">Alamat / KRAP / Wilayah</label>
-                        <input type="text" id="targetAddress" placeholder="ALAMAT / KRAP / WILAYAH" value="" oninput="saveCurrentState()"
+                        <input type="text" id="targetAddress" placeholder="ALAMAT / KRAP / WILAYAH" value="" oninput="syncInputToCard()"
                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder:text-white/40 placeholder:italic focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                     </div>
                 </div>
@@ -170,22 +170,22 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">Frekuensi QSO</label>
-                        <input type="text" id="freqInput" placeholder="143.040" value="143.040" oninput="updateFreqText(); saveCurrentState();"
+                        <input type="text" id="freqInput" placeholder="143.040" value="143.040" oninput="updateFreqText(); syncInputToCard();"
                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">RST (Signal)</label>
-                        <input type="text" id="rstReport" value="59" oninput="updateQRCode(); saveCurrentState()"
+                        <input type="text" id="rstReport" value="59" oninput="syncInputToCard()"
                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">NCS (Net Control)</label>
-                        <input type="text" id="ncsInput" placeholder="JZ04MIB" value="JZ04MIB" oninput="updateQRCode(); saveCurrentState()"
+                        <input type="text" id="ncsInput" placeholder="JZ04MIB" value="JZ04MIB" oninput="syncInputToCard()"
                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">Nama Event</label>
-                        <input type="text" id="eventInput" placeholder="Special Call" value="Rutin / Net Lokal" oninput="updateEventText(); saveCurrentState();"
+                        <input type="text" id="eventInput" placeholder="Special Call" value="Rutin / Net Lokal" oninput="updateEventText(); syncInputToCard();"
                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                     </div>
                 </div>
@@ -194,12 +194,12 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 bg-slate-950 p-3 rounded-xl border border-slate-800 items-center">
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">Tanggal QSO</label>
-                        <input type="date" id="dateInput" onchange="userEditedTime = true; updateDateTime(); saveCurrentState();" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-white text-sm">
+                        <input type="date" id="dateInput" onchange="userEditedTime = true; updateDateTime(); syncInputToCard();" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-white text-sm">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">Waktu QSO & Zona Waktu</label>
                         <div class="flex flex-wrap items-center gap-2">
-                            <input type="text" id="timeInput" oninput="userEditedTime = true; updateDateTime(); saveCurrentState();" class="w-32 bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-white text-sm font-mono">
+                            <input type="text" id="timeInput" oninput="userEditedTime = true; updateDateTime(); syncInputToCard();" class="w-32 bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-white text-sm font-mono">
                             <div class="flex gap-1">
                                 <button onclick="setZone('WIB')" id="btnWIB" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-2.5 py-1.5 rounded transition font-bold shadow">WIB</button>
                                 <button onclick="setZone('WITA')" id="btnWITA" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-1.5 rounded transition font-bold shadow">WITA</button>
@@ -298,7 +298,7 @@
                                 <div id="displayAddress" class="text-slate-200 mt-0.5 leading-tight box-text text-[10px] md:text-xs" data-base="12">-</div>
                             </div>
 
-                            <!-- 3. Kotak QSO & QR Code (Diperbesar ukurannya agar mudah di-scan) -->
+                            <!-- 3. Kotak QSO & QR Code (Dioptimalkan & Diperbesar agar mudah di-scan) -->
                             <div id="box-qso" class="draggable-box top-24 right-3 z-20 shadow-lg">
                                 <div class="flex items-center gap-3">
                                     <div class="grid grid-cols-2 gap-1 font-mono-custom box-text text-[11px] md:text-xs flex-1" data-base="12">
@@ -1100,30 +1100,53 @@
             const freq = document.getElementById('freqInput').value.trim() || "143.040";
             document.getElementById('displayFreqHeader').innerText = `RAPI ${freq} MHz`;
             document.getElementById('displayFreqBox').innerText = freq;
-            updateQRCode();
+        }
+
+        function updateEventText() {
+            const ev = document.getElementById('eventInput').value;
+            document.getElementById('displayEvent').innerText = `Event: ${ev}`;
+            document.getElementById('statActiveEvent').innerText = ev;
+        }
+
+        // Fungsi Sinkronisasi Real-Time (Input Form -> Tampilan Kartu & QR Code)
+        function syncInputToCard() {
+            const call = document.getElementById('targetCallsign').value.trim().toUpperCase();
+            const name = document.getElementById('targetName').value.trim().toUpperCase();
+            const address = document.getElementById('targetAddress').value.trim();
+            const freq = document.getElementById('freqInput').value.trim() || "143.040";
+            const rst = document.getElementById('rstReport').value.trim() || "59";
+            const ncs = document.getElementById('ncsInput').value.trim().toUpperCase() || "JZ04MIB";
+            const event = document.getElementById('eventInput').value.trim() || "Rutin / Net Lokal";
+            const date = document.getElementById('dateInput').value;
+            const time = document.getElementById('timeInput').value;
+
+            // Update Tampilan di Kartu Preview Secara Langsung
+            document.getElementById('displayCallsign').innerText = call || "-";
+            document.getElementById('displayName').innerText = name || "-";
+            document.getElementById('displayAddress').innerText = address || "-";
+            document.getElementById('displayRst').innerText = rst;
+            document.getElementById('displayNcs').innerText = ncs;
+
+            updateFreqText();
+            updateEventText();
+            updateDateTime();
+
+            // Format Data QR Code Disederhanakan & Dioptimalkan Agar Sangat Mudah Di-scan
+            const qrData = `QSO CONFIRMATION RAPI\n` +
+                           `Call: ${call || '-'} (${name || '-'})\n` +
+                           `Freq: ${freq} MHz | RST: ${rst}\n` +
+                           `Time: ${date} ${time}\n` +
+                           `NCS: ${ncs} | Event: ${event}`;
+
+            const qrText = encodeURIComponent(qrData);
+            // Resolusi 300x300 dengan teks ringkas membuat QR Code langsung terbaca kamera HP dalam sekejap
+            document.getElementById('qrCodeImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${qrText}`;
+
+            saveCurrentState();
         }
 
         function updateQRCode() {
-            const call = document.getElementById('displayCallsign').innerText;
-            const name = document.getElementById('displayName').innerText;
-            const freq = document.getElementById('freqInput').value.trim();
-            const rst = document.getElementById('rstReport').value.trim();
-            const time = document.getElementById('timeInput').value.trim();
-            const date = document.getElementById('dateInput').value.trim();
-            const ncs = document.getElementById('ncsInput').value.trim();
-            const event = document.getElementById('eventInput').value.trim();
-
-            // Data teks diringkas tanpa emoji dan simbol berat agar QR Code lebih longgar & mudah dibaca kamera
-            const text = `QSO CONFIRMATION RAPI\n` +
-                         `Call: ${call} (${name})\n` +
-                         `Freq: ${freq} MHz | RST: ${rst}\n` +
-                         `Time: ${date} ${time}\n` +
-                         `NCS: ${ncs} | Event: ${event}`;
-                         
-            const qrText = encodeURIComponent(text);
-            
-            // Resolusi API ditingkatkan ke 300x300 agar tajam saat dicetak dan mudah di-scan
-            document.getElementById('qrCodeImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${qrText}`;
+            syncInputToCard();
         }
 
         function checkCallsignDatabase() {
@@ -1148,7 +1171,7 @@
                 nameInput.focus();
                 statusEl.innerHTML = `<span class="text-amber-400 font-bold">⚠️ Data tidak ada di database. Silakan masukkan Nama & Alamat manual!</span>`;
             }
-            saveCurrentState();
+            syncInputToCard();
         }
 
         function syncControllerValues() {
@@ -1275,9 +1298,6 @@
             } else {
                 startLiveClock();
             }
-            if (savedState.displayCallsign) document.getElementById('displayCallsign').innerText = savedState.displayCallsign;
-            if (savedState.displayName) document.getElementById('displayName').innerText = savedState.displayName;
-            if (savedState.displayAddress) document.getElementById('displayAddress').innerText = savedState.displayAddress;
 
             if (savedState.bgImage) {
                 document.getElementById('printable-card').style.backgroundImage = `url('${savedState.bgImage}')`;
@@ -1289,10 +1309,6 @@
                 document.getElementById('bgZoomRange').value = savedState.bgZoom;
             }
             updateBackgroundStyle();
-
-            updateDateTime();
-            updateEventText();
-            updateFreqText();
 
             if (savedState.layout) {
                 Object.keys(savedState.layout).forEach(id => {
@@ -1325,6 +1341,7 @@
                 });
             }
             syncControllerValues();
+            syncInputToCard();
             updateLogTable();
             updateStatistics();
         }
@@ -1374,14 +1391,6 @@
         function updateDateTime() {
             document.getElementById('displayDate').innerText = document.getElementById('dateInput').value;
             document.getElementById('displayTime').innerText = document.getElementById('timeInput').value;
-            updateQRCode();
-        }
-
-        function updateEventText() {
-            const ev = document.getElementById('eventInput').value;
-            document.getElementById('displayEvent').innerText = `Event: ${ev}`;
-            document.getElementById('statActiveEvent').innerText = ev;
-            updateQRCode();
         }
 
         function adjustFontSize(change) {
@@ -1665,14 +1674,6 @@
                 return;
             }
 
-            document.getElementById('displayRst').innerText = rst || "59";
-            document.getElementById('displayNcs').innerText = ncs || "-";
-            updateFreqText();
-
-            document.getElementById('displayCallsign').innerText = callsignInput;
-            document.getElementById('displayName').innerText = name;
-            document.getElementById('displayAddress').innerText = address;
-            
             statusInfo.innerText = `Data QSO berhasil disimpan ke log.`;
             statusInfo.className = "text-xs text-emerald-400 mt-2";
 
@@ -1687,7 +1688,7 @@
             updateLogTable();
             updateDevQsoLogTable();
             updateStatistics();
-            saveCurrentState();
+            syncInputToCard();
         }
 
         function updateLogTable() {
@@ -1736,16 +1737,7 @@
             document.getElementById('dateInput').value = log.date;
             document.getElementById('timeInput').value = log.time;
 
-            document.getElementById('displayCallsign').innerText = log.callsign;
-            document.getElementById('displayName').innerText = log.name;
-            document.getElementById('displayAddress').innerText = log.address;
-            document.getElementById('displayRst').innerText = log.rst;
-            document.getElementById('displayNcs').innerText = log.ncs;
-            document.getElementById('displayFreqBox').innerText = log.freq;
-            document.getElementById('displayFreqHeader').innerText = `RAPI ${log.freq} MHz`;
-            document.getElementById('displayEvent').innerText = `Event: ${log.event}`;
-            document.getElementById('displayDate').innerText = log.date;
-            document.getElementById('displayTime').innerText = log.time;
+            syncInputToCard();
 
             setTimeout(() => {
                 downloadCardImage();
@@ -1772,7 +1764,7 @@
 
         window.onload = function() { 
             loadSavedState(); 
-            updateQRCode();
+            syncInputToCard();
         };
     </script>
 </body>
