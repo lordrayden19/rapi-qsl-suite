@@ -462,6 +462,10 @@
                 <div class="flex flex-wrap justify-between items-center gap-3">
                     <h3 class="text-sm md:text-lg font-bold text-amber-400">📊 Log Data QSO & QSL Manager</h3>
                     <div class="flex flex-wrap gap-2">
+                        <label class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-1.5 px-3 rounded-lg transition shadow cursor-pointer flex items-center gap-1">
+                            📂 Import Log QSO
+                            <input type="file" accept=".csv, .json, .adi" onchange="importQsoLogFile(event)" class="hidden">
+                        </label>
                         <button onclick="exportToADIF()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-1.5 px-3 rounded-lg transition shadow">
                             📡 Ekspor ADIF (.adi)
                         </button>
@@ -1435,6 +1439,121 @@
                 }
                 localStorage.setItem('rapiCustomDB', JSON.stringify(customDatabase));
                 alert(`Database / ADIF berhasil dimuat! Total entri baru: ${newEntries}`);
+            };
+            reader.readAsText(file);
+        }
+
+        // --- FUNGSI IMPORT LOG QSO (BARU) ---
+        function importQsoLogFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const content = e.target.result;
+                let importedCount = 0;
+
+                if (file.name.endsWith('.json')) {
+                    try {
+                        const parsed = JSON.parse(content);
+                        const logsArray = Array.isArray(parsed) ? parsed : (parsed.qsoLogs || parsed.devQsoLogs);
+                        if (logsArray && Array.isArray(logsArray)) {
+                            logsArray.forEach(item => {
+                                if (item.callsign) {
+                                    qsoLogs.push({
+                                        date: item.date || new Date().toISOString().slice(0,10),
+                                        time: item.time || "00:00 WIB",
+                                        callsign: item.callsign.trim().toUpperCase(),
+                                        freq: item.freq || "143.040",
+                                        name: (item.name || "-").toUpperCase(),
+                                        address: item.address || item.qth || "-",
+                                        rst: item.rst || item.rst_sent || "59",
+                                        ncs: item.ncs || "JZ04MIB",
+                                        event: item.event || item.comment || "Imported Log"
+                                    });
+                                    importedCount++;
+                                }
+                            });
+                        } else {
+                            alert("Format JSON log tidak dikenali!");
+                            return;
+                        }
+                    } catch(err) {
+                        alert("Gagal memparsing file JSON: " + err);
+                        return;
+                    }
+                } else if (file.name.endsWith('.csv')) {
+                    const lines = content.split('\n');
+                    // Lewati baris header jika ada
+                    const startIndex = lines[0].toLowerCase().includes('callsign') ? 1 : 0;
+                    for (let i = startIndex; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+                        const parts = line.split(',');
+                        if (parts.length >= 3) {
+                            // Format CSV diasumsikan: Tanggal, Waktu, Callsign, Frekuensi, Nama, Alamat, RST, NCS, Event
+                            const logEntry = {
+                                date: parts[0]?.trim() || new Date().toISOString().slice(0,10),
+                                time: parts[1]?.trim() || "00:00 WIB",
+                                callsign: parts[2]?.trim().toUpperCase() || parts[0]?.trim().toUpperCase(),
+                                freq: parts[3]?.trim() || "143.040",
+                                name: (parts[4]?.trim() || "ANONIM").toUpperCase(),
+                                address: parts[5]?.trim() || "-",
+                                rst: parts[6]?.trim() || "59",
+                                ncs: parts[7]?.trim() || "JZ04MIB",
+                                event: parts[8]?.trim() || "Import CSV"
+                            };
+                            qsoLogs.push(logEntry);
+                            importedCount++;
+                        }
+                    }
+                } else if (file.name.endsWith('.adi') || file.name.endsWith('.adi')) {
+                    const records = content.split('<EOR>');
+                    records.forEach(rec => {
+                        const callMatch = rec.match(/<CALL:(\d+)>([^<]+)/i);
+                        const dateMatch = rec.match(/<QSO_DATE:(\d+)>([^<]+)/i);
+                        const timeMatch = rec.match(/<TIME_ON:(\d+)>([^<]+)/i);
+                        const freqMatch = rec.match(/<FREQ:(\d+)>([^<]+)/i);
+                        const nameMatch = rec.match(/<NAME:(\d+)>([^<]+)/i);
+                        const qthMatch = rec.match(/<QTH:(\d+)>([^<]+)/i);
+                        const rstMatch = rec.match(/<RST_SENT:(\d+)>([^<]+)/i);
+                        const commMatch = rec.match(/<COMMENT:(\d+)>([^<]+)/i);
+
+                        if (callMatch) {
+                            let rawDate = dateMatch ? dateMatch[2].trim() : "";
+                            let formattedDate = rawDate.length === 8 ? `${rawDate.slice(0,4)}-${rawDate.slice(4,6)}-${rawDate.slice(6,8)}` : new Date().toISOString().slice(0,10);
+                            let rawTime = timeMatch ? timeMatch[2].trim() : "";
+                            let formattedTime = rawTime.length >= 4 ? `${rawTime.slice(0,2)}:${rawTime.slice(2,4)} WIB` : "00:00 WIB";
+
+                            const logEntry = {
+                                date: formattedDate,
+                                time: formattedTime,
+                                callsign: callMatch[2].trim().toUpperCase(),
+                                freq: freqMatch ? freqMatch[2].trim() : "143.040",
+                                name: nameMatch ? nameMatch[2].trim().toUpperCase() : "ANGGOTA ADIF",
+                                address: qthMatch ? qthMatch[2].trim() : "Indonesia",
+                                rst: rstMatch ? rstMatch[2].trim() : "59",
+                                ncs: "JZ04MIB",
+                                event: commMatch ? commMatch[2].trim() : "ADIF Import"
+                            };
+                            qsoLogs.push(logEntry);
+                            importedCount++;
+                        }
+                    });
+                }
+
+                if (importedCount > 0) {
+                    localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
+                    // Sinkronisasi juga ke server developer logs
+                    devQsoLogs = [...qsoLogs];
+                    await saveServerLogs();
+
+                    updateLogTable();
+                    updateDevQsoLogTable();
+                    updateStatistics();
+                    alert(`Berhasil mengimpor ${importedCount} data log QSO! Data kini siap dibuatkan QSL Card.`);
+                } else {
+                    alert("Tidak ada data valid yang berhasil dibaca dari file tersebut.");
+                }
             };
             reader.readAsText(file);
         }
