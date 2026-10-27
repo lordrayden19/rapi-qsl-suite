@@ -48,9 +48,7 @@
             0%, 100% { transform: scale(1); text-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
             50% { transform: scale(1.05); text-shadow: 0 0 20px rgba(245, 158, 11, 1), 0 0 30px rgba(239, 68, 68, 0.8); }
         }
-        .animate-warning {
-            animation: bounceGlow 1.5s infinite ease-in-out;
-        }
+        .animate-warning { animation: bounceGlow 1.5s infinite ease-in-out; }
         @media print {
             body * { visibility: hidden; }
             #printable-card, #printable-card * { visibility: visible; }
@@ -62,7 +60,7 @@
 </head>
 <body id="appBody" class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-start p-2 md:p-4 transition-colors duration-300">
 
-    <!-- Modal Check-In Operator / Pelacakan Pengguna untuk Pengembang -->
+    <!-- Modal Check-In Operator -->
     <div id="operatorModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border-2 border-amber-500 p-6 md:p-8 rounded-2xl shadow-2xl text-center max-w-md w-full space-y-4">
             <div class="text-4xl">📡</div>
@@ -279,11 +277,92 @@
                 </button>
             </div>
 
-            <!-- Layout Utama: Area Desain & Panel Kontrol Tampilan -->
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 items-start">
-                
-                <!-- Area Preview QSL Card (3 Kolom) -->
-                <div class="lg:col-span-3 flex justify-center overflow-x-auto py-2">
+            <!-- STUDIO DESAIN QSL CARD (KARTU DI TENGAH/UTAMA, DIAPIT/DIKELILINGI KONTROL TAMPILAN) -->
+            <div class="bg-slate-900 p-4 md:p-6 rounded-2xl shadow-xl border border-slate-800 space-y-4 no-print">
+                <div class="flex flex-wrap justify-between items-center border-b border-slate-800 pb-3">
+                    <h3 class="text-sm md:text-base font-bold text-amber-400 flex items-center gap-2">
+                        🎨 Studio Desain & Kontrol Tampilan QSL Card
+                    </h3>
+                    <span class="text-xs text-slate-400">Semua perubahan langsung terlihat pada kartu di bawah ini</span>
+                </div>
+
+                <!-- Baris Toolbar Kontrol Cepat di Sekitar Kartu -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs">
+                    <!-- Preset -->
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1">📐 Preset Tata Letak</label>
+                        <div class="grid grid-cols-3 gap-1">
+                            <button onclick="applyPreset('classic')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-1 rounded transition">Klasik</button>
+                            <button onclick="applyPreset('modern')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-1 rounded transition">Modern</button>
+                            <button onclick="applyPreset('minimal')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-1 rounded transition">Minimalis</button>
+                        </div>
+                    </div>
+                    <!-- Pilih Kotak Target -->
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1">📌 Kotak Target Teks</label>
+                        <select id="targetBoxSelect" onchange="syncControllerValues()" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-2 py-1.5">
+                            <option value="box-header">1. Header</option>
+                            <option value="box-station">2. Stasiun Tujuan</option>
+                            <option value="box-qso">3. Detail QSO</option>
+                            <option value="box-footer">4. Footer / Pembuat</option>
+                        </select>
+                    </div>
+                    <!-- Transparansi Kotak -->
+                    <div>
+                        <div class="flex justify-between font-medium text-slate-300 mb-1">
+                            <span>👻 Transparansi Kotak:</span>
+                            <span id="opacityValue" class="text-amber-400 font-mono">90%</span>
+                        </div>
+                        <input type="range" id="opacityRange" min="0.0" max="1.0" step="0.05" value="0.90" oninput="changeBoxOpacity(this.value)" class="w-full accent-amber-500 cursor-pointer py-1">
+                    </div>
+                    <!-- Efek Blur / Warna Huruf / Ukuran -->
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1">✨ Efek Blur & Teks</label>
+                        <div class="flex gap-1">
+                            <select id="boxBlurSelect" onchange="changeBoxBlur(this.value)" class="bg-slate-900 border border-slate-700 text-white rounded px-2 py-1 flex-1">
+                                <option value="blur(4px)">Blur Kaca</option>
+                                <option value="none">Solid</option>
+                            </select>
+                            <input type="color" id="textColorPicker" value="#ffffff" onchange="changeTextColor(this.value)" class="w-8 h-7 bg-slate-900 border border-slate-700 rounded cursor-pointer p-0.5" title="Warna Teks">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sub-Toolbar Tambahan (Zoom Background & Ukuran Huruf) -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs items-center">
+                    <div>
+                        <div class="flex justify-between font-medium text-slate-300 mb-1">
+                            <span>🖼️ Zoom Latar Belakang:</span>
+                            <span id="bgZoomVal" class="text-amber-400 font-mono">100%</span>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <select id="bgSizeMode" onchange="updateBackgroundStyle()" class="bg-slate-900 border border-slate-700 text-white rounded px-2 py-1">
+                                <option value="100% 100%">Stretch</option>
+                                <option value="contain">Contain</option>
+                                <option value="cover">Cover</option>
+                            </select>
+                            <input type="range" id="bgZoomRange" min="50" max="200" value="100" step="5" oninput="updateBackgroundStyle()" class="w-full accent-amber-500 cursor-pointer">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1">🔤 Ukuran Huruf Kotak Aktif</label>
+                        <div class="grid grid-cols-3 gap-1">
+                            <button onclick="adjustFontSize(1)" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-1 rounded">A (+)</button>
+                            <button onclick="adjustFontSize(-1)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-1 rounded">A (-)</button>
+                            <button onclick="resetFontSize()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-1 rounded">Reset</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-medium text-slate-300 mb-1">✏️ Editor Belakang Kartu</label>
+                        <div class="flex gap-1">
+                            <input type="text" id="backRigInput" value="Dual Band VHF/UHF" oninput="updateBackCardContent()" placeholder="Rig" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-2 py-1">
+                            <button onclick="resetLayoutSettings()" class="bg-rose-600/80 hover:bg-rose-500 text-white px-2.5 py-1 rounded whitespace-nowrap" title="Reset Posisi Kartu">Reset Posisi</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AREA PREVIEW UTAMA QSL CARD -->
+                <div class="flex justify-center overflow-x-auto py-4 bg-slate-950 p-4 rounded-2xl border-2 border-dashed border-slate-800">
                     <div id="printable-card" class="qsl-card bg-gradient-to-br from-slate-800 via-sky-950 to-indigo-950 border-4 border-amber-400 rounded-2xl p-3 md:p-4 shadow-2xl overflow-hidden" style="background-color: #1e293b; min-width: 320px;">
                         
                         <div id="cardOverlay" class="absolute inset-0 bg-white/5 pointer-events-none -z-10"></div>
@@ -353,8 +432,8 @@
                                 <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700 space-y-1">
                                     <div class="text-amber-400 font-bold">📍 Rig & Antena Setup</div>
                                     <div id="displayBackRig">Rig: Dual Band VHF/UHF Transceiver</div>
-                                    <div id="displayBackAnt">Antenna: Ground Plane / Yagi Directional</div>
-                                    <div>Grid Locator: <span id="displayBackGrid">OI32KC</span></div>
+                                    <div id="displayBackAnt">Antenna: Ground Plane / Yagi</div>
+                                    <div>Grid Locator: OI32KC</div>
                                 </div>
                                 <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700 space-y-1">
                                     <div class="text-amber-400 font-bold">🤝 Catatan / Remarks</div>
@@ -368,118 +447,6 @@
 
                     </div>
                 </div>
-
-                <!-- Panel Kontrol Tampilan & Editor Belakang (1 Kolom) -->
-                <div class="bg-slate-900 p-4 rounded-2xl shadow-xl border border-slate-800 no-print space-y-3">
-                    <h3 class="text-xs md:text-sm font-bold text-amber-400 border-b border-slate-800 pb-2">🎛️ Kontrol Tampilan & Kartu</h3>
-                    
-                    <!-- Preset Tata Letak -->
-                    <div class="space-y-1">
-                        <label class="block text-xs font-medium text-slate-300">📐 Preset Tata Letak Cepat</label>
-                        <div class="grid grid-cols-3 gap-1">
-                            <button onclick="applyPreset('classic')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-1 rounded text-[11px] transition">Klasik</button>
-                            <button onclick="applyPreset('modern')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-1 rounded text-[11px] transition">Modern</button>
-                            <button onclick="applyPreset('minimal')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-1 rounded text-[11px] transition">Minimalis</button>
-                        </div>
-                    </div>
-
-                    <hr class="border-slate-800">
-
-                    <!-- Custom Back Side Editor -->
-                    <div class="space-y-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                        <label class="block text-xs font-bold text-amber-300">✏️ Editor Sisi Belakang</label>
-                        <div>
-                            <span class="text-[10px] text-slate-400 block">Rig Perangkat:</span>
-                            <input type="text" id="backRigInput" value="Dual Band VHF/UHF Transceiver" oninput="updateBackCardContent()" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-2 py-1 text-xs">
-                        </div>
-                        <div>
-                            <span class="text-[10px] text-slate-400 block">Antena:</span>
-                            <input type="text" id="backAntInput" value="Ground Plane / Yagi" oninput="updateBackCardContent()" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-2 py-1 text-xs">
-                        </div>
-                        <div>
-                            <span class="text-[10px] text-slate-400 block">Catatan / Remarks:</span>
-                            <textarea id="backRemarksInput" rows="2" oninput="updateBackCardContent()" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-2 py-1 text-xs">Terima kasih atas QSO yang berkesan. Harap balas QSL card ini via biro atau eQSL.</textarea>
-                        </div>
-                    </div>
-
-                    <hr class="border-slate-800">
-
-                    <!-- Pengaturan Zoom & Latar Belakang -->
-                    <div class="space-y-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                        <label class="block text-xs font-bold text-amber-300">🖼️ Pengaturan Gambar Latar</label>
-                        <div>
-                            <span class="text-[10px] text-slate-400 block mb-1">Mode Tampilan:</span>
-                            <select id="bgSizeMode" onchange="updateBackgroundStyle()" class="w-full bg-slate-900 border border-slate-700 text-white rounded px-2 py-1 text-xs">
-                                <option value="100% 100%">Pas Penuh (Stretch)</option>
-                                <option value="contain">Utuh Tanpa Terpotong</option>
-                                <option value="cover">Penuh / Zoom (Cover)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-[10px] text-slate-400 mb-1">
-                                <span>Skala Zoom Latar:</span>
-                                <span id="bgZoomVal" class="font-mono text-amber-400">100%</span>
-                            </div>
-                            <input type="range" id="bgZoomRange" min="50" max="200" value="100" step="5" oninput="updateBackgroundStyle()" class="w-full accent-amber-500 cursor-pointer">
-                        </div>
-                    </div>
-
-                    <hr class="border-slate-800">
-
-                    <div class="space-y-1">
-                        <label class="block text-xs font-medium text-slate-300">📌 Pilih Kotak Target Teks</label>
-                        <select id="targetBoxSelect" onchange="syncControllerValues()" class="w-full bg-slate-950 border border-slate-700 text-white rounded px-2 py-1.5 text-xs">
-                            <option value="box-header">1. Header</option>
-                            <option value="box-station">2. Stasiun Tujuan</option>
-                            <option value="box-qso">3. Detail QSO</option>
-                            <option value="box-footer">4. Footer / Pembuat</option>
-                        </select>
-                    </div>
-
-                    <hr class="border-slate-800">
-
-                    <!-- Pengaturan Transparansi -->
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1">👻 Transparansi Kotak Target</label>
-                        <input type="range" id="opacityRange" min="0.0" max="1.0" step="0.05" value="0.90" oninput="changeBoxOpacity(this.value)" class="w-full accent-amber-500 cursor-pointer">
-                        <div class="flex justify-between text-[10px] text-slate-400 mt-0.5">
-                            <span>Transparan</span>
-                            <span id="opacityValue" class="font-mono text-amber-400 font-bold">90%</span>
-                            <span>Pekat</span>
-                        </div>
-                    </div>
-
-                    <!-- Pengaturan Efek Blur -->
-                    <div class="space-y-1 pt-1">
-                        <label class="block text-xs font-medium text-slate-300">✨ Efek Blur Kotak Target</label>
-                        <select id="boxBlurSelect" onchange="changeBoxBlur(this.value)" class="w-full bg-slate-950 border border-slate-700 text-white rounded px-2 py-1.5 text-xs">
-                            <option value="blur(4px)">Aktif (Blur Kaca)</option>
-                            <option value="none">Non-Aktif (Solid)</option>
-                        </select>
-                    </div>
-
-                    <hr class="border-slate-800">
-
-                    <div class="space-y-1">
-                        <label class="block text-xs font-medium text-slate-300">🔤 Ukuran Huruf Kotak Target</label>
-                        <div class="grid grid-cols-3 gap-1 pt-1">
-                            <button onclick="adjustFontSize(1)" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-1.5 rounded text-xs transition">A (+)</button>
-                            <button onclick="adjustFontSize(-1)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-1.5 rounded text-xs transition">A (-)</button>
-                            <button onclick="resetFontSize()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-1.5 rounded text-xs transition">Reset</button>
-                        </div>
-                    </div>
-
-                    <hr class="border-slate-800">
-
-                    <div class="space-y-1">
-                        <label class="block text-xs font-medium text-slate-300">🎨 Warna Huruf Kotak Target</label>
-                        <div class="flex items-center gap-2">
-                            <input type="color" id="textColorPicker" value="#ffffff" onchange="changeTextColor(this.value)" class="w-10 h-8 bg-slate-950 border border-slate-700 rounded cursor-pointer p-0.5">
-                            <span class="text-[11px] text-slate-400">Pilih warna teks aktif</span>
-                        </div>
-                    </div>
-                </div>
-
             </div>
 
             <!-- Panel Log Data QSO & Ekspor -->
@@ -932,10 +899,7 @@
         // --- VOICE-TO-TEXT FEATURE ---
         function startVoiceInput(inputId) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                alert("Browser Anda tidak mendukung fitur Voice-to-Text.");
-                return;
-            }
+            if (!SpeechRecognition) { alert("Browser Anda tidak mendukung Voice-to-Text."); return; }
             const recognition = new SpeechRecognition();
             recognition.lang = 'id-ID';
             recognition.onresult = (event) => {
@@ -985,11 +949,7 @@
         }
 
         function clearQueue() {
-            if (confirm("Kosongkan semua antrian?")) {
-                queueList = [];
-                localStorage.removeItem('rapiQueueList');
-                updateQueueTable();
-            }
+            if (confirm("Kosongkan semua antrian?")) { queueList = []; localStorage.removeItem('rapiQueueList'); updateQueueTable(); }
         }
 
         // --- BATCH PDF EXPORT ---
@@ -1007,7 +967,7 @@
             doc.text("TANGGAL", 16, y+5); doc.text("WAKTU", 48, y+5); doc.text("CALLSIGN", 75, y+5); doc.text("FREQ", 105, y+5); doc.text("NAMA", 130, y+5); doc.text("ALAMAT", 185, y+5); doc.text("RST", 250, y+5); doc.text("NCS", 270, y+5);
             y += 10;
             doc.setTextColor(220, 225, 235);
-            qsoLogs.forEach((log, idx) => {
+            qsoLogs.forEach((log) => {
                 if (y > 190) { doc.addPage(); doc.setFillColor(15, 23, 42); doc.rect(0, 0, 297, 210, 'F'); y = 20; }
                 doc.text(log.date, 16, y); doc.text(log.time, 48, y); doc.text(log.callsign, 75, y); doc.text(log.freq, 105, y); doc.text(log.name.substring(0,22), 130, y); doc.text(log.address.substring(0,25), 185, y); doc.text(log.rst, 250, y); doc.text(log.ncs, 270, y);
                 y += 7;
@@ -1108,9 +1068,8 @@
         }
 
         function updateBackCardContent() {
-            document.getElementById('displayBackRig').innerText = `Rig: ${document.getElementById('backRigInput').value}`;
-            document.getElementById('displayBackAnt').innerText = `Antenna: ${document.getElementById('backAntInput').value}`;
-            document.getElementById('displayBackRemarks').innerText = document.getElementById('backRemarksInput').value;
+            const rigVal = document.getElementById('backRigInput').value;
+            document.getElementById('displayBackRig').innerText = `Rig: ${rigVal}`;
             saveCurrentState();
         }
 
@@ -1319,7 +1278,7 @@
         document.querySelectorAll('.draggable-box').forEach(box => {
             let isDragging = false, startX, startY, initialX, initialY;
             box.addEventListener('pointerdown', (e) => {
-                if (['BUTTON', 'INPUT', 'IMG', 'A', 'TEXTAREA'].includes(e.target.tagName)) return;
+                if (['BUTTON', 'INPUT', 'IMG', 'A', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
                 isDragging = true; startX = e.clientX; startY = e.clientY;
                 const rect = box.getBoundingClientRect(), parentRect = box.parentElement.getBoundingClientRect();
                 initialX = rect.left - parentRect.left; initialY = rect.top - parentRect.top;
