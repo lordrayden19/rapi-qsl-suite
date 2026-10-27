@@ -221,8 +221,11 @@
                         📂 Muat Tata Letak
                         <input type="file" accept=".json" onchange="uploadLayoutFile(event)" class="hidden">
                     </label>
-                    <button onclick="downloadCardImage()" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 px-3 rounded-lg transition shadow-md text-xs ml-auto">
+                    <button onclick="downloadCardImage()" class="bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 px-3 rounded-lg transition shadow-md text-xs">
                         📥 Unduh Gambar (PNG)
+                    </button>
+                    <button onclick="shareCardImageToWhatsApp()" class="bg-emerald-700 hover:bg-emerald-600 text-white font-semibold py-2 px-3 rounded-lg transition shadow-md text-xs ml-auto">
+                        📱 Kirim QSL ke WA
                     </button>
                 </div>
 
@@ -1443,7 +1446,7 @@
             reader.readAsText(file);
         }
 
-        // --- FUNGSI IMPORT LOG QSO (BARU) ---
+        // --- FUNGSI IMPORT LOG QSO ---
         function importQsoLogFile(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1483,14 +1486,12 @@
                     }
                 } else if (file.name.endsWith('.csv')) {
                     const lines = content.split('\n');
-                    // Lewati baris header jika ada
                     const startIndex = lines[0].toLowerCase().includes('callsign') ? 1 : 0;
                     for (let i = startIndex; i < lines.length; i++) {
                         const line = lines[i].trim();
                         if (!line) continue;
                         const parts = line.split(',');
                         if (parts.length >= 3) {
-                            // Format CSV diasumsikan: Tanggal, Waktu, Callsign, Frekuensi, Nama, Alamat, RST, NCS, Event
                             const logEntry = {
                                 date: parts[0]?.trim() || new Date().toISOString().slice(0,10),
                                 time: parts[1]?.trim() || "00:00 WIB",
@@ -1543,7 +1544,6 @@
 
                 if (importedCount > 0) {
                     localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
-                    // Sinkronisasi juga ke server developer logs
                     devQsoLogs = [...qsoLogs];
                     await saveServerLogs();
 
@@ -1639,6 +1639,59 @@
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             });
+        }
+
+        // --- FUNGSI KIRIM GAMBAR QSL CARD LANGSUNG KE WHATSAPP ---
+        async function shareCardImageToWhatsApp(index) {
+            if (index !== undefined) {
+                loadLogToCard(index);
+            }
+            const call = document.getElementById('targetCallsign').value.trim();
+            if (!call) {
+                alert("Masukkan Callsign valid terlebih dahulu sebelum mengirim QSL Card!");
+                return;
+            }
+
+            const printCardEl = document.getElementById('printable-card');
+            
+            try {
+                const canvas = await html2canvas(printCardEl, { scale: 3, useCORS: true, backgroundColor: "#0f172a" });
+                canvas.toBlob(async blob => {
+                    const file = new File([blob], `QSL_Card_${call}.png`, { type: 'image/png' });
+                    
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                title: `QSL Card ${call}`,
+                                text: `📡 Konfirmasi QSO RAPI\nStasiun: ${call}\n73! Salam Amatir Radio.`,
+                                files: [file]
+                            });
+                        } catch (err) {
+                            if (err.name !== 'AbortError') {
+                                console.error("Share dibatalkan/gagal:", err);
+                                fallbackDownloadAndWA(blob, call, index);
+                            }
+                        }
+                    } else {
+                        fallbackDownloadAndWA(blob, call, index);
+                    }
+                }, 'image/png');
+            } catch (err) {
+                alert("Gagal merender QSL Card: " + err);
+            }
+        }
+
+        function fallbackDownloadAndWA(blob, call, index) {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `QSL_Card_${call}.png`;
+            link.click();
+            
+            if (index !== undefined) {
+                shareToWhatsApp(index);
+            } else {
+                alert("Gambar QSL Card telah diunduh otomatis. Silakan lampirkan gambar tersebut secara manual ke WhatsApp.");
+            }
         }
 
         function exportToJPG() {
@@ -1816,14 +1869,13 @@
                     <td class="p-2 italic">${log.event}</td>
                     <td class="p-2 text-center flex justify-center gap-1 action-col">
                         <button onclick="downloadLogCard(${originalIndex})" class="bg-purple-600 text-white px-2 py-1 rounded text-[10px]" title="Unduh QSL">📥 QSL</button>
-                        <button onclick="shareToWhatsApp(${originalIndex})" class="bg-emerald-600 text-white px-2 py-1 rounded text-[10px]" title="Kirim WhatsApp">WA</button>
+                        <button onclick="shareCardImageToWhatsApp(${originalIndex})" class="bg-emerald-600 text-white px-2 py-1 rounded text-[10px]" title="Kirim QSL Card ke WhatsApp">📱 WA</button>
                         <button onclick="deleteLogItem(${originalIndex})" class="bg-rose-600 text-white px-2 py-1 rounded text-[10px]" title="Hapus">Hapus</button>
                     </td>
                 </tr>`;
             });
         }
 
-        // Fungsi Memuat Data Log secara Seamless (Tanpa Auto-Scroll ke Atas) dan Otomatis Unduh QSL
         function loadLogToCard(index) {
             const log = qsoLogs[index];
             if (!log) return;
@@ -1838,7 +1890,6 @@
             document.getElementById('timeInput').value = log.time;
 
             syncInputToCard();
-            // window.scrollTo dihapus agar halaman tetap di posisinya (tidak bikin pusing)
         }
 
         function downloadLogCard(index) {
