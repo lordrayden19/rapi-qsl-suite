@@ -9,6 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;600;700&display=swap');
         .font-mono-custom { font-family: 'Share Tech Mono', monospace; }
@@ -1404,6 +1405,35 @@
             saveCurrentState();
         }
 
+        // QR dibuat secara lokal sebagai data URL agar selalu tampil dan aman dirender/diunduh.
+        // Tidak menggunakan crossOrigin pada gambar pihak ketiga yang dapat membuat browser memblokirnya.
+        function renderQrCode(text) {
+            const img = document.getElementById('qrCodeImg');
+            if (!img) return;
+            try {
+                if (typeof QRCode !== 'undefined') {
+                    const holder = document.createElement('div');
+                    new QRCode(holder, {
+                        text: String(text || '-'), width: 600, height: 600,
+                        colorDark: '#000000', colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                    const canvas = holder.querySelector('canvas');
+                    const generatedImg = holder.querySelector('img');
+                    const dataUrl = canvas ? canvas.toDataURL('image/png') : generatedImg?.src;
+                    if (dataUrl) {
+                        img.removeAttribute('crossorigin');
+                        img.src = dataUrl;
+                        img.alt = 'QR Code konfirmasi QSO';
+                        return;
+                    }
+                }
+            } catch (err) { console.warn('QR lokal gagal dibuat, mencoba layanan cadangan.', err); }
+            // Fallback untuk browser yang gagal memuat pustaka QR lokal.
+            img.removeAttribute('crossorigin');
+            img.src = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=4&data=${encodeURIComponent(text)}`;
+        }
+
         function syncInputToCard() {
             const call = document.getElementById('targetCallsign').value.trim().toUpperCase();
             const name = document.getElementById('targetName').value.trim().toUpperCase();
@@ -1427,9 +1457,7 @@
             document.getElementById('displayTime').innerText = time || "-";
 
             const qrData = `QSO CONFIRMATION RAPI\nCall: ${call || '-'} (${name || '-'})\nFreq: ${freq} MHz | RST: ${rst}\nTime: ${date || '-'} ${time || '-'}\nNCS: ${ncs} | Event: ${event}`;
-            const qrImg = document.getElementById('qrCodeImg');
-            qrImg.crossOrigin = 'anonymous';
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=4&data=${encodeURIComponent(qrData)}`;
+            renderQrCode(qrData);
             saveCurrentState();
         }
 
@@ -1996,7 +2024,7 @@
         }
 
         function waitForImage(img) {
-            if (!img) return Promise.resolve();
+            if (!img || !img.src) return Promise.reject(new Error('QR Code belum dibuat. Muat ulang aplikasi dan periksa pustaka QR.'));
             if (img.complete && img.naturalWidth > 0) return Promise.resolve();
             if (img.complete && img.naturalWidth === 0) return Promise.reject(new Error('QR Code gagal dimuat. Periksa koneksi internet.'));
             return new Promise((resolve, reject) => {
