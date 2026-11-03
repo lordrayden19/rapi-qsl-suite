@@ -3717,7 +3717,28 @@ module.exports = QRCode;
         }
 
         window.onload = function() {
-            loadSavedState(); syncInputToCard();
+            loadSavedState();
+            // Pastikan QR tampil pada kartu depan dengan posisi default seperti contoh.
+            // Ini juga menimpa preferensi lama yang pernah menyimpan QR dalam keadaan tersembunyi.
+            const qrBox = document.getElementById('qr-code-element');
+            const qrToggle = document.getElementById('qrVisibleToggle');
+            const qrRange = document.getElementById('qrSizeRange');
+            if (qrBox) {
+                qrBox.classList.remove('qr-hidden');
+                qrBox.style.display = 'block';
+                qrBox.style.left = 'calc(50% - 58px)';
+                qrBox.style.right = 'auto';
+                qrBox.style.top = 'auto';
+                qrBox.style.bottom = '66px';
+                qrBox.style.width = '116px';
+                qrBox.style.height = '116px';
+            }
+            if (qrToggle) qrToggle.checked = true;
+            if (qrRange) qrRange.value = '116';
+            const qrLabel = document.getElementById('qrSizeValue');
+            if (qrLabel) qrLabel.textContent = '116 px';
+            syncInputToCard();
+            saveCurrentState();
             lastDesignSnapshot = captureDesignSnapshot();
             document.querySelectorAll('.design-tools input, .design-tools select').forEach(el => {
                 el.addEventListener('change', () => { clearTimeout(designHistoryTimer); designHistoryTimer = setTimeout(designHistoryCommit, 120); });
