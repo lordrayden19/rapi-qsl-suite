@@ -4,7 +4,7 @@ from flask import Flask, jsonify, render_template, request, Response
 import psycopg2
 import requests
 import re
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 app = Flask(__name__)
 
@@ -153,7 +153,7 @@ def callbook_national():
       result = session.post(
           home.url,
           data={"_token": token_match.group(1), "callsign": callsign},
-          headers={"Referer": home.url, "Origin": f"{home.scheme}://{home.host}", "Content-Type": "application/x-www-form-urlencoded"},
+          headers={"Referer": home.url, "Origin": f"{urlparse(home.url).scheme}://{urlparse(home.url).netloc}", "Content-Type": "application/x-www-form-urlencoded"},
           timeout=(8, 20),
       )
       result.raise_for_status()
