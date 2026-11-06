@@ -166,6 +166,34 @@ def callbook_national():
   return jsonify({"error": "Server RAPI Nasional menolak atau tidak dapat menerima permintaan dari Render. Silakan lihat Runtime Logs untuk detail kedua alamat."}), 502
 
 
+# Proxy pencarian resmi DJID IAR/IKRAP.
+POSTEL_SEARCH_URL = "https://iar-ikrap.postel.go.id/registrant/searchDataIar/"
+
+@app.route("/api/callbook/postel", methods=["POST"])
+def callbook_postel():
+  payload = request.get_json(silent=True) or {}
+  callsign = valid_callsign(payload.get("callsign"))
+  if not callsign:
+    return jsonify({"error": "Callsign tidak valid."}), 400
+  try:
+    response = requests.get(
+        POSTEL_SEARCH_URL,
+        params={"callsign": callsign},
+        headers={
+            "User-Agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8",
+            "Referer": "https://iar-ikrap.postel.go.id/",
+        },
+        timeout=(8, 25),
+    )
+    response.raise_for_status()
+    return Response(response.text, content_type="text/html; charset=utf-8")
+  except requests.RequestException as exc:
+    print("Callbook Postel error:", repr(exc))
+    return jsonify({"error": "Layanan pencarian Postel IAR/IKRAP tidak dapat diakses saat ini."}), 502
+
+
 @app.route("/")
 def index():
   return render_template("index.html")
