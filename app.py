@@ -175,20 +175,42 @@ def callbook_postel():
   callsign = valid_callsign(payload.get("callsign"))
   if not callsign:
     return jsonify({"error": "Callsign tidak valid."}), 400
+
+  # Situs Postel menolak akses langsung ke endpoint AJAX tanpa sesi halaman
+  # dan header XMLHttpRequest. Buat sesi terlebih dahulu dari halaman utama.
+  session = requests.Session()
+  session.headers.update({
+      "User-Agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36",
+      "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8",
+  })
   try:
-    response = requests.get(
+    home = session.get(
+        "https://iar-ikrap.postel.go.id/",
+        headers={"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"},
+        timeout=(8, 25),
+        allow_redirects=True,
+    )
+    home.raise_for_status()
+
+    response = session.get(
         POSTEL_SEARCH_URL,
         params={"callsign": callsign},
         headers={
-            "User-Agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8",
-            "Referer": "https://iar-ikrap.postel.go.id/",
+            "Referer": home.url,
+            "Origin": "https://iar-ikrap.postel.go.id",
+            "X-Requested-With": "XMLHttpRequest",
+            "Accept": "*/*",
         },
         timeout=(8, 25),
     )
     response.raise_for_status()
-    return Response(response.text, content_type="text/html; charset=utf-8")
+
+    body = response.text.strip()
+    if not body or "akses tidak sah" in body.lower():
+      return jsonify({
+          "error": "Postel masih menolak permintaan meskipun sesi dan header AJAX sudah digunakan."
+      }), 502
+    return Response(body, content_type=response.headers.get("Content-Type", "text/html; charset=utf-8"))
   except requests.RequestException as exc:
     print("Callbook Postel error:", repr(exc))
     return jsonify({"error": "Layanan pencarian Postel IAR/IKRAP tidak dapat diakses saat ini."}), 502
