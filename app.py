@@ -33,10 +33,16 @@ def init_db():
             );
         """)
     initial_data = json.dumps({"devQsoLogs": [], "operatorLogs": []})
+    initial_callbook = json.dumps({})
     cur.execute(
         "INSERT INTO app_storage (key, data) VALUES (%s, %s) ON CONFLICT (key)"
         " DO NOTHING;",
         ("logs_data", initial_data),
+    )
+    cur.execute(
+        "INSERT INTO app_storage (key, data) VALUES (%s, %s) ON CONFLICT (key)"
+        " DO NOTHING;",
+        ("callbook_data", initial_callbook),
     )
     conn.commit()
     cur.close()
@@ -164,6 +170,79 @@ def callbook_national():
       continue
 
   return jsonify({"error": "Server RAPI Nasional menolak atau tidak dapat menerima permintaan dari Render. Silakan lihat Runtime Logs untuk detail kedua alamat."}), 502
+
+
+def load_callbook_database():
+  if not DATABASE_URL:
+    return {}
+  try:
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT data FROM app_storage WHERE key = %s;", ("callbook_data",))
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if row and row[0]:
+      data = json.loads(row[0])
+      return data if isinstance(data, dict) else {}
+  except Exception as e:
+    print("Error load callbook database:", e)
+  return {}
+
+
+def save_callbook_database(data):
+  if not DATABASE_URL:
+    return False
+  try:
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO app_storage (key, data) VALUES (%s, %s) "
+        "ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data;",
+        ("callbook_data", json.dumps(data, ensure_ascii=False)),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    return True
+  except Exception as e:
+    print("Error save callbook database:", e)
+    return False
+
+
+@app.route("/api/callbook-db", methods=["GET"])
+def get_callbook_database():
+  return jsonify({"database": load_callbook_database()})
+
+
+@app.route("/api/callbook-db", methods=["POST"])
+def update_callbook_database():
+  payload = request.get_json(silent=True) or {}
+  incoming = payload.get("database")
+  if not isinstance(incoming, dict):
+    return jsonify({"error": "Format database tidak valid."}), 400
+  clean = {}
+  for raw_cs, raw_record in incoming.items():
+    cs = valid_callsign(raw_cs)
+    if not cs or not isinstance(raw_record, dict):
+      continue
+    name = str(raw_record.get("name") or "").strip().upper()[:180]
+    address = str(raw_record.get("address") or "").strip()[:300]
+    if name or address:
+      clean[cs] = {"name": name, "address": address}
+  if payload.get("replace") is True:
+    final_db = clean
+  else:
+    final_db = load_callbook_database()
+    for cs, record in clean.items():
+      old = final_db.get(cs) if isinstance(final_db.get(cs), dict) else {}
+      final_db[cs] = {
+          "name": record["name"] or str(old.get("name") or "").strip().upper(),
+          "address": record["address"] or str(old.get("address") or "").strip(),
+      }
+  if not save_callbook_database(final_db):
+    return jsonify({"error": "Database server belum tersedia atau gagal menyimpan."}), 503
+  return jsonify({"status": "success", "count": len(final_db)})
 
 
 @app.route("/")
