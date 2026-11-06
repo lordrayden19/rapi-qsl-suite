@@ -87,7 +87,12 @@ def save_server_logs(data):
 # Proxy Callbook: permintaan dilakukan dari server Render agar browser tidak
 # terhalang kebijakan CORS. Tidak menyimpan kredensial pengguna.
 CALLBOOK_REGIONAL_URL = "https://rapiwil16ciamis.alatbantu.xyz/index.php"
-CALLBOOK_NATIONAL_URL = "https://rapinasional.or.id/"
+# Domain resmi yang tercantum pada panduan Callbook RAPI Nusantara.
+# Domain lama tetap menjadi fallback jika domain mail tidak dapat diakses.
+CALLBOOK_NATIONAL_URLS = [
+  "https://mail.rapinasional.or.id/",
+  "https://rapinasional.or.id/",
+]
 
 def valid_callsign(value):
   callsign = str(value or "").strip().upper()
@@ -120,37 +125,45 @@ def callbook_national():
   callsign = valid_callsign(payload.get("callsign"))
   if not callsign:
     return jsonify({"error": "Callsign tidak valid."}), 400
-  session = requests.Session()
-  session.headers.update({
-      "User-Agent": "Mozilla/5.0 (compatible; RAPI-QSL-Suite/1.0)",
-      "Accept": "text/html,application/xhtml+xml",
-  })
-  try:
-    home = session.get(CALLBOOK_NATIONAL_URL, timeout=(8, 20))
-    home.raise_for_status()
-    # Laravel CSRF token dapat tersedia sebagai meta tag atau hidden input.
-    token_match = re.search(
-        r"""<meta[^>]+name=['"]csrf-token['"][^>]+content=['"]([^'"]+)""",
-        home.text, re.I
-    )
-    if not token_match:
+  last_error = None
+  for base_url in CALLBOOK_NATIONAL_URLS:
+    session = requests.Session()
+    session.headers.update({
+        # Header browser umum; tidak melewati CAPTCHA atau proteksi akses.
+        "User-Agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8",
+        "Connection": "keep-alive",
+    })
+    try:
+      home = session.get(base_url, timeout=(8, 20), allow_redirects=True)
+      home.raise_for_status()
+      # Laravel CSRF token dapat tersedia sebagai meta tag atau hidden input.
       token_match = re.search(
-          r"""<input[^>]+name=['"]_token['"][^>]+value=['"]([^'"]+)""",
+          r"""<meta[^>]+name=['"]csrf-token['"][^>]+content=['"]([^'"]+)""",
           home.text, re.I
       )
-    if not token_match:
-      return jsonify({"error": "Token keamanan Callbook Nasional tidak ditemukan; struktur situs mungkin berubah."}), 502
-    result = session.post(
-        home.url,
-        data={"_token": token_match.group(1), "callsign": callsign},
-        headers={"Referer": home.url, "Content-Type": "application/x-www-form-urlencoded"},
-        timeout=(8, 20),
-    )
-    result.raise_for_status()
-    return Response(result.text, content_type="text/html; charset=utf-8")
-  except requests.RequestException as exc:
-    print("Callbook national error:", repr(exc))
-    return jsonify({"error": "Callbook RAPI Nasional tidak dapat diakses saat ini."}), 502
+      if not token_match:
+        token_match = re.search(
+            r"""<input[^>]+name=['"]_token['"][^>]+value=['"]([^'"]+)""",
+            home.text, re.I
+        )
+      if not token_match:
+        return jsonify({"error": "Halaman Callbook Nasional terbuka, tetapi token/form pencarian tidak ditemukan. Struktur situs perlu diperiksa."}), 502
+      result = session.post(
+          home.url,
+          data={"_token": token_match.group(1), "callsign": callsign},
+          headers={"Referer": home.url, "Origin": f"{home.scheme}://{home.host}", "Content-Type": "application/x-www-form-urlencoded"},
+          timeout=(8, 20),
+      )
+      result.raise_for_status()
+      return Response(result.text, content_type="text/html; charset=utf-8")
+    except requests.RequestException as exc:
+      last_error = exc
+      print(f"Callbook national error ({base_url}):", repr(exc))
+      continue
+
+  return jsonify({"error": "Server RAPI Nasional menolak atau tidak dapat menerima permintaan dari Render. Silakan lihat Runtime Logs untuk detail kedua alamat."}), 502
 
 
 @app.route("/")
