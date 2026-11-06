@@ -2725,8 +2725,7 @@ module.exports = QRCode;
             saveCurrentState();
         }
 
-        const REGIONAL_CALLBOOK_URL = 'https://rapiwil16ciamis.alatbantu.xyz/index.php?page=callbook';
-        const NATIONAL_CALLBOOK_URL = 'https://rapinasional.or.id/';
+        // Pencarian Callbook melalui backend Render (menghindari CORS browser).
 
         function callbookValue(doc, labelText) {
             const labels = Array.from(doc.querySelectorAll('label'));
@@ -2762,29 +2761,33 @@ module.exports = QRCode;
             return { name: name.toUpperCase(), address };
         }
 
+        async function fetchCallbookProxy(endpoint, cs) {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'text/html, application/json' },
+                body: JSON.stringify({ callsign: cs }),
+                cache: 'no-store'
+            });
+            const contentType = response.headers.get('content-type') || '';
+            if (!response.ok) {
+                let detail = `HTTP ${response.status}`;
+                if (contentType.includes('application/json')) {
+                    const data = await response.json();
+                    detail = data.error || detail;
+                }
+                throw new Error(detail);
+            }
+            return response.text();
+        }
+
         async function lookupRegionalCallbook(cs) {
-            const url = `${REGIONAL_CALLBOOK_URL}&callsign=${encodeURIComponent(cs)}`;
-            const response = await fetch(url, { method: 'GET', mode: 'cors', credentials: 'omit', cache: 'no-store' });
-            if (!response.ok) throw new Error(`RAPI Wilayah merespons HTTP ${response.status}`);
-            return callbookResultFromHtml(await response.text(), cs, 'regional');
+            const html = await fetchCallbookProxy('/api/callbook/regional', cs);
+            return callbookResultFromHtml(html, cs, 'regional');
         }
 
         async function lookupNationalCallbook(cs) {
-            // Ambil token CSRF dan cookie sesi terbaru sebelum mengirim form POST.
-            const home = await fetch(NATIONAL_CALLBOOK_URL, { method: 'GET', mode: 'cors', credentials: 'include', cache: 'no-store' });
-            if (!home.ok) throw new Error(`RAPI Nasional merespons HTTP ${home.status}`);
-            const homeHtml = await home.text();
-            const homeDoc = new DOMParser().parseFromString(homeHtml, 'text/html');
-            const token = homeDoc.querySelector('meta[name="csrf-token"]')?.content || homeDoc.querySelector('input[name="_token"]')?.value;
-            if (!token) throw new Error('Token keamanan RAPI Nasional tidak ditemukan');
-            const body = new URLSearchParams({ _token: token, callsign: cs });
-            const result = await fetch(NATIONAL_CALLBOOK_URL, {
-                method: 'POST', mode: 'cors', credentials: 'include', cache: 'no-store',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'text/html' },
-                body
-            });
-            if (!result.ok) throw new Error(`Pencarian Nasional merespons HTTP ${result.status}`);
-            return callbookResultFromHtml(await result.text(), cs, 'national');
+            const html = await fetchCallbookProxy('/api/callbook/national', cs);
+            return callbookResultFromHtml(html, cs, 'national');
         }
 
         function setCallsignLookupStatus(message, color = 'text-slate-400') {
