@@ -1,7 +1,10 @@
 import json
 import os
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, Response
 import psycopg2
+import requests
+import re
+from urllib.parse import urlencode
 
 app = Flask(__name__)
 
@@ -78,6 +81,76 @@ def save_server_logs(data):
     conn.close()
   except Exception as e:
     print("Error save logs:", e)
+
+
+
+# Proxy Callbook: permintaan dilakukan dari server Render agar browser tidak
+# terhalang kebijakan CORS. Tidak menyimpan kredensial pengguna.
+CALLBOOK_REGIONAL_URL = "https://rapiwil16ciamis.alatbantu.xyz/index.php"
+CALLBOOK_NATIONAL_URL = "https://rapinasional.or.id/"
+
+def valid_callsign(value):
+  callsign = str(value or "").strip().upper()
+  if not re.fullmatch(r"[A-Z0-9]{3,12}", callsign):
+    return None
+  return callsign
+
+@app.route("/api/callbook/regional", methods=["POST"])
+def callbook_regional():
+  payload = request.get_json(silent=True) or {}
+  callsign = valid_callsign(payload.get("callsign"))
+  if not callsign:
+    return jsonify({"error": "Callsign tidak valid."}), 400
+  try:
+    response = requests.get(
+        CALLBOOK_REGIONAL_URL,
+        params={"page": "callbook", "callsign": callsign},
+        headers={"User-Agent": "Mozilla/5.0 (compatible; RAPI-QSL-Suite/1.0)"},
+        timeout=(8, 20),
+    )
+    response.raise_for_status()
+    return Response(response.text, content_type="text/html; charset=utf-8")
+  except requests.RequestException as exc:
+    print("Callbook regional error:", repr(exc))
+    return jsonify({"error": "Callbook RAPI Wilayah 16 tidak dapat diakses saat ini."}), 502
+
+@app.route("/api/callbook/national", methods=["POST"])
+def callbook_national():
+  payload = request.get_json(silent=True) or {}
+  callsign = valid_callsign(payload.get("callsign"))
+  if not callsign:
+    return jsonify({"error": "Callsign tidak valid."}), 400
+  session = requests.Session()
+  session.headers.update({
+      "User-Agent": "Mozilla/5.0 (compatible; RAPI-QSL-Suite/1.0)",
+      "Accept": "text/html,application/xhtml+xml",
+  })
+  try:
+    home = session.get(CALLBOOK_NATIONAL_URL, timeout=(8, 20))
+    home.raise_for_status()
+    # Laravel CSRF token dapat tersedia sebagai meta tag atau hidden input.
+    token_match = re.search(
+        r"""<meta[^>]+name=['"]csrf-token['"][^>]+content=['"]([^'"]+)""",
+        home.text, re.I
+    )
+    if not token_match:
+      token_match = re.search(
+          r"""<input[^>]+name=['"]_token['"][^>]+value=['"]([^'"]+)""",
+          home.text, re.I
+      )
+    if not token_match:
+      return jsonify({"error": "Token keamanan Callbook Nasional tidak ditemukan; struktur situs mungkin berubah."}), 502
+    result = session.post(
+        home.url,
+        data={"_token": token_match.group(1), "callsign": callsign},
+        headers={"Referer": home.url, "Content-Type": "application/x-www-form-urlencoded"},
+        timeout=(8, 20),
+    )
+    result.raise_for_status()
+    return Response(result.text, content_type="text/html; charset=utf-8")
+  except requests.RequestException as exc:
+    print("Callbook national error:", repr(exc))
+    return jsonify({"error": "Callbook RAPI Nasional tidak dapat diakses saat ini."}), 502
 
 
 @app.route("/")
