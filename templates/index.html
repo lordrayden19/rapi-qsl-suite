@@ -230,12 +230,13 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">NCS (Net Control)</label>
                         <div class="flex gap-1">
-                            <input type="text" id="ncsInput" placeholder="JZ04MIB" value="JZ04MIB" oninput="syncInputToCard()"
+                            <input type="text" id="ncsInput" placeholder="JZ04MIB" value="JZ04MIB" oninput="syncInputToCard()" onchange="lookupNcsCallbook()"
                                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white uppercase focus:ring-2 focus:ring-amber-500 focus:outline-none text-sm">
                             <button onclick="startVoiceInput('ncsInput')" class="bg-purple-600 hover:bg-purple-500 text-white px-2.5 py-2 rounded-lg text-xs font-semibold transition shadow whitespace-nowrap" title="Dikte NCS">
                                 🎤
                             </button>
                         </div>
+                        <div id="ncsLookupStatus" class="text-[10px] text-slate-400 mt-1">Nama NCS akan dicari otomatis saat callsign selesai dimasukkan.</div>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-300 mb-1">Nama Event</label>
@@ -483,6 +484,7 @@
                                     <div><span class="text-sky-300">TIME:</span> <strong id="displayTime" class="text-white">-</strong></div>
                                     <div class="col-span-2 pt-1 border-t border-slate-700">
                                         <span class="text-sky-300">NCS:</span> <strong id="displayNcs" class="text-amber-300">JZ04MIB</strong>
+                                        <div id="displayNcsName" class="text-white/85 text-[9px] md:text-[10px] pl-8 mt-0.5"></div>
                                     </div>
                                 </div>
                                 <div id="imagePreviewContainer" class="mt-2 hidden">
@@ -697,6 +699,32 @@
 
         <!-- KONTEN TAB 3: DEVELOPER LOG -->
         <div id="contentDeveloper" class="hidden bg-slate-900 p-6 md:p-8 rounded-2xl shadow-xl border border-slate-800 space-y-8">
+            <section class="space-y-3 border border-cyan-700/40 bg-slate-950/60 rounded-xl p-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <h2 class="text-lg font-bold text-cyan-300">🗃️ Database Callbook Anggota</h2>
+                        <p class="text-xs text-slate-400">Database tersimpan terpisah dari log QSO dan log operator pada server.</p>
+                        <p id="developerDbCount" class="text-[10px] text-cyan-200 mt-1">Memuat database...</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="downloadCallsignDatabase('json')" class="bg-cyan-700 text-white text-xs font-semibold px-3 py-2 rounded-lg">Ekspor JSON</button>
+                        <button onclick="downloadCallsignDatabase('csv')" class="bg-sky-700 text-white text-xs font-semibold px-3 py-2 rounded-lg">Ekspor CSV</button>
+                        <button onclick="clearDeveloperCallbookDatabase()" class="bg-rose-700 text-white text-xs font-semibold px-3 py-2 rounded-lg">Hapus Database</button>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2 items-center">
+                    <label class="text-xs text-slate-300">Impor CSV/JSON:
+                        <input type="file" id="developerDbImport" accept=".csv,.json,application/json,text/csv" onchange="loadDeveloperDatabase(event)" class="block mt-1 text-xs text-slate-300 max-w-full">
+                    </label>
+                    <span class="text-[10px] text-slate-500">Data yang diimpor akan digabung; data lama tidak dihapus.</span>
+                </div>
+                <div class="overflow-x-auto max-h-72 border border-slate-800 rounded-lg">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="sticky top-0 bg-slate-800 text-cyan-200"><tr><th class="p-2">Callsign</th><th class="p-2">Nama</th><th class="p-2">Alamat/QTH</th><th class="p-2">Aksi</th></tr></thead>
+                        <tbody id="developerDbTableBody"><tr><td colspan="4" class="p-3 text-center text-slate-500">Memuat database...</td></tr></tbody>
+                    </table>
+                </div>
+            </section>
             <div class="space-y-4">
                 <div class="flex flex-wrap justify-between items-center border-b border-slate-800 pb-4 gap-2">
                     <div>
@@ -2130,6 +2158,8 @@ module.exports = QRCode;
 
         window.addEventListener('DOMContentLoaded', async () => {
             await fetchServerLogs();
+            await loadServerCallbookDatabase();
+            await lookupNcsCallbook();
             if (currentOperator) {
                 document.getElementById('operatorModal').classList.add('hidden');
                 updateOperatorDisplay(currentOperator);
@@ -2178,7 +2208,6 @@ module.exports = QRCode;
         }
 
         async function deleteOperatorLog(index) {
-            if (!verifyDeveloperAuth()) return;
             if (confirm("Hapus log operator ini?")) {
                 operatorLogs.splice(index, 1);
                 await saveServerLogs();
@@ -2187,7 +2216,6 @@ module.exports = QRCode;
         }
 
         async function clearAllOperatorLogs() {
-            if (!verifyDeveloperAuth()) return;
             if (confirm("Hapus semua log riwayat pengguna?")) {
                 operatorLogs = [];
                 await saveServerLogs();
@@ -2196,7 +2224,6 @@ module.exports = QRCode;
         }
 
         async function deleteDevQsoItem(index) {
-            if (!verifyDeveloperAuth()) return;
             if (confirm("Hapus arsip log QSO ini?")) {
                 devQsoLogs.splice(index, 1);
                 await saveServerLogs();
@@ -2205,7 +2232,6 @@ module.exports = QRCode;
         }
 
         async function clearAllDevQsoLogs() {
-            if (!verifyDeveloperAuth()) return;
             if (confirm("Hapus semua arsip log QSO terpusat?")) {
                 devQsoLogs = [];
                 await saveServerLogs();
@@ -2229,13 +2255,12 @@ module.exports = QRCode;
             if (devQsoLogs.length === 0) { tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-slate-500">Belum ada arsip log QSO.</td></tr>`; return; }
             tbody.innerHTML = "";
             devQsoLogs.forEach((log, index) => {
-                tbody.innerHTML += `<tr class="border-b border-slate-800 hover:bg-slate-800/50"><td class="p-2">${log.date}</td><td class="p-2">${log.time}</td><td class="p-2 font-bold text-amber-400">${log.callsign}</td><td class="p-2 font-mono text-amber-300">${log.freq}</td><td class="p-2">${log.name}</td><td class="p-2">${log.address}</td><td class="p-2">${log.rst}</td><td class="p-2">${log.ncs}</td><td class="p-2 italic">${log.event}</td><td class="p-2 text-center"><button onclick="deleteDevQsoItem(${index})" class="bg-rose-600 text-white px-2 py-1 rounded text-[10px]">Hapus</button></td></tr>`;
+                tbody.innerHTML += `<tr class="border-b border-slate-800 hover:bg-slate-800/50"><td class="p-2">${log.date}</td><td class="p-2">${log.time}</td><td class="p-2 font-bold text-amber-400">${log.callsign}</td><td class="p-2 font-mono text-amber-300">${log.freq}</td><td class="p-2">${log.name}</td><td class="p-2">${log.address}</td><td class="p-2">${log.rst}</td><td class="p-2">${log.ncs || ''}${log.ncsName ? `<div class="text-[10px] text-slate-400">${escapeHTML(log.ncsName)}</div>` : ''}</td><td class="p-2 italic">${log.event}</td><td class="p-2 text-center"><button onclick="deleteDevQsoItem(${index})" class="bg-rose-600 text-white px-2 py-1 rounded text-[10px]">Hapus</button></td></tr>`;
             });
         }
 
         function exportOperatorLogCSV() {
             if (operatorLogs.length === 0) { alert("Belum ada data operator!"); return; }
-            if (!verifyDeveloperAuth()) return;
             let csv = "data:text/csv;charset=utf-8,Waktu,Callsign,Nama,Status\n";
             operatorLogs.forEach(o => { csv += `"${o.time}",${o.callsign},"${o.name}",Aktif\n`; });
             const link = document.createElement("a"); link.href = encodeURI(csv); link.download = `Log_Pengguna.csv`; document.body.appendChild(link); link.click(); link.remove();
@@ -2451,14 +2476,47 @@ module.exports = QRCode;
             if (!name && !address) return null;
             return { callsign: cs, name, address };
         }
+        let developerUnlocked = false;
+        let callbookSaveQueue = Promise.resolve();
+        async function saveCallbookDatabaseToServer() {
+            const snapshot = JSON.parse(JSON.stringify(customDatabase));
+            callbookSaveQueue = callbookSaveQueue.then(async () => {
+                const response = await fetch('/api/callbook-db', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ database: snapshot }) });
+                if (!response.ok) throw new Error(`Server database HTTP ${response.status}`);
+                return response.json();
+            });
+            return callbookSaveQueue;
+        }
+        async function loadServerCallbookDatabase() {
+            try {
+                const response = await fetch('/api/callbook-db', { cache: 'no-store' });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const payload = await response.json();
+                const serverDb = payload.database && typeof payload.database === 'object' ? payload.database : {};
+                Object.entries(serverDb).forEach(([cs, rec]) => { const clean = normalizeCallsignRecord(cs, rec); if (clean) customDatabase[clean.callsign] = mergeCallsignRecord(customDatabase[clean.callsign], clean); });
+                try { localStorage.setItem('rapiCustomDB', JSON.stringify(customDatabase)); } catch (e) {}
+                updateCustomDatabaseCount();
+                // Push merged local + server records back so existing local entries are retained.
+                await saveCallbookDatabaseToServer();
+            } catch (err) {
+                console.warn('Database server belum tersinkron:', err);
+                const el = document.getElementById('customDbCount');
+                if (el) el.textContent += ' · server belum tersinkron';
+            }
+        }
         function persistCustomDatabase(showError = true) {
             try {
                 localStorage.setItem('rapiCustomDB', JSON.stringify(customDatabase));
                 updateCustomDatabaseCount();
+                saveCallbookDatabaseToServer().catch(err => {
+                    console.error('Database gagal disimpan ke server:', err);
+                    const status = document.getElementById('statusInfo');
+                    if (status) { status.textContent = 'Peringatan: database tersimpan di perangkat, tetapi sinkronisasi server gagal.'; status.className = 'text-xs text-amber-400 mt-2'; }
+                });
                 return true;
             } catch (err) {
                 console.error('Database callsign gagal disimpan', err);
-                if (showError) alert('Database tidak dapat disimpan ke penyimpanan browser. Ekspor/backup data, lalu coba lagi.');
+                if (showError) alert('Database tidak dapat disimpan di perangkat. Periksa ruang penyimpanan dan ekspor cadangan.');
                 return false;
             }
         }
@@ -2512,7 +2570,7 @@ module.exports = QRCode;
             const tabDevBtn = document.getElementById('tabDeveloper');
             const tabAboutBtn = document.getElementById('tabAbout');
 
-            if (tabName === 'developer' && !verifyDeveloperAuth()) return;
+            if (tabName === 'developer' && !developerUnlocked) { if (!verifyDeveloperAuth()) return; developerUnlocked = true; }
 
             [genContent, queueContent, devContent, aboutContent].forEach(el => el.classList.add('hidden'));
             [tabGenBtn, tabQueueBtn, tabDevBtn, tabAboutBtn].forEach(btn => {
@@ -2521,7 +2579,7 @@ module.exports = QRCode;
 
             if (tabName === 'generator') { genContent.classList.remove('hidden'); tabGenBtn.className = "bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow"; }
             else if (tabName === 'queue') { queueContent.classList.remove('hidden'); tabQueueBtn.className = "bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow"; updateQueueTable(); }
-            else if (tabName === 'developer') { devContent.classList.remove('hidden'); tabDevBtn.className = "bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow"; fetchServerLogs(); }
+            else if (tabName === 'developer') { devContent.classList.remove('hidden'); tabDevBtn.className = "bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow"; fetchServerLogs(); updateDeveloperDatabaseTable(); }
             else if (tabName === 'about') { aboutContent.classList.remove('hidden'); tabAboutBtn.className = "bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow"; }
         }
 
@@ -2708,13 +2766,19 @@ module.exports = QRCode;
             document.getElementById('displayAddress').innerText = address || "-";
             document.getElementById('displayRst').innerText = document.getElementById('rstReceivedInput')?.value.trim() ? `${rst} / ${document.getElementById('rstReceivedInput').value.trim()}` : rst;
             document.getElementById('displayNcs').innerText = ncs;
+            const ncsRecord = normalizeCallsignRecord(ncs, getCombinedDatabase()[ncs]);
+            const ncsName = ncsRecord?.name || '';
+            const ncsNameEl = document.getElementById('displayNcsName');
+            if (ncsNameEl) ncsNameEl.innerText = ncsName;
+            const ncsNameState = document.getElementById('ncsNameState');
+            if (ncsNameState) ncsNameState.value = ncsName;
             document.getElementById('displayFreqBox').innerText = `${freq} MHz · ${document.getElementById('modeInput')?.value || 'FM'}`;
             document.getElementById('displayFreqHeader').innerText = `RAPI ${freq} MHz`;
             document.getElementById('displayEvent').innerText = `Event: ${event}`;
             document.getElementById('displayDate').innerText = date || "-";
             document.getElementById('displayTime').innerText = time || "-";
 
-            const qrData = `QSO CONFIRMATION RAPI\nCall: ${call || '-'} (${name || '-'})\nFreq: ${freq} MHz | RST: ${rst}\nTime: ${date || '-'} ${time || '-'}\nNCS: ${ncs} | Event: ${event}`;
+            const qrData = `QSO CONFIRMATION RAPI\nCall: ${call || '-'} (${name || '-'})\nFreq: ${freq} MHz | RST: ${rst}\nTime: ${date || '-'} ${time || '-'}\nNCS: ${ncs}${ncsName ? ' - ' + ncsName : ''} | Event: ${event}`;
             renderQrCode(qrData);
             saveCurrentState();
         }
@@ -2790,76 +2854,6 @@ module.exports = QRCode;
             return callbookResultFromHtml(html, cs, 'national');
         }
 
-        function postelResultFromHtml(html, cs) {
-            const doc = new DOMParser().parseFromString(html, 'text/html');
-            const text = (doc.body ? doc.body.textContent : doc.documentElement.textContent)
-                .replace(/\u00a0/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
-            const read = (pattern) => {
-                const match = text.match(pattern);
-                return match ? (match[1] || '').trim() : '';
-            };
-            const name = read(/Nama\s+Pemilik\s*\(Full\s*name\)\s*:\s*(.*?)\s*Provinsi\s*\(Province\)/i);
-            const province = read(/Provinsi\s*\(Province\)\s*:\s*(.*?)\s*Tanda\s*Panggilan\s*\(Callsign\)/i);
-            const foundCallsign = read(/Tanda\s*Panggilan\s*\(Callsign\)\s*:\s*([A-Z0-9]+)/i).toUpperCase();
-            if (!name || (foundCallsign && foundCallsign !== cs)) return null;
-
-            const expiry = read(/Masa\s*Laku\s*\(Date\s*of\s*expiration\)\s*:\s*(.*?)\s*Status\s*:/i);
-            const status = read(/Status\s*:\s*(.*?)(?:\s+IAR\s*\(|$)/i);
-            const iarMatch = text.match(/IAR\s*\(\s*([A-ZÀ-ÿ]+)\s*\)\s*([0-9]+)/i);
-            const ikrapMatch = text.match(/IKRAP\s*\(\s*([A-ZÀ-ÿ]+)\s*\)\s*([0-9]+)/i);
-            return {
-                name: name.toUpperCase(),
-                address: province.toUpperCase(),
-                callsign: foundCallsign || cs,
-                expiry,
-                status,
-                iarStatus: iarMatch ? iarMatch[1].toUpperCase() : '',
-                iarNumber: iarMatch ? iarMatch[2] : '',
-                ikrapStatus: ikrapMatch ? ikrapMatch[1].toUpperCase() : '',
-                ikrapNumber: ikrapMatch ? ikrapMatch[2] : ''
-            };
-        }
-
-        async function lookupPostelCallbook(cs) {
-            const html = await fetchCallbookProxy('/api/callbook/postel', cs);
-            return postelResultFromHtml(html, cs);
-        }
-
-        function postelSummary(result) {
-            const parts = [];
-            if (result.iarStatus || result.iarNumber) {
-                parts.push(`IAR ${result.iarStatus || '-'}${result.iarNumber ? ' No. ' + result.iarNumber : ''}`);
-            }
-            if (result.ikrapStatus || result.ikrapNumber) {
-                parts.push(`IKRAP ${result.ikrapStatus || '-'}${result.ikrapNumber ? ' No. ' + result.ikrapNumber : ''}`);
-            }
-            if (result.expiry) parts.push(`Masa berlaku ${result.expiry}`);
-            return parts.join(' • ');
-        }
-
-        async function supplementFromPostel(cs, baseMessage) {
-            setCallsignLookupStatus(`${baseMessage} Memeriksa izin Postel IAR/IKRAP...`, 'text-amber-300');
-            try {
-                const postel = await lookupPostelCallbook(cs);
-                if (!postel) {
-                    setCallsignLookupStatus(`${baseMessage} Postel: data izin tidak ditemukan.`, 'text-emerald-400');
-                    return;
-                }
-                const nameInput = document.getElementById('targetName');
-                const addrInput = document.getElementById('targetAddress');
-                if (!nameInput.value.trim() && postel.name) nameInput.value = postel.name;
-                if (!addrInput.value.trim() && postel.address) addrInput.value = postel.address;
-                const permit = postelSummary(postel);
-                setCallsignLookupStatus(`✅ ${baseMessage} | Postel: ${permit || 'Data izin ditemukan.'}`, 'text-emerald-400');
-                syncInputToCard();
-            } catch (err) {
-                console.warn('Pencarian Postel gagal:', err);
-                setCallsignLookupStatus(`${baseMessage} Postel belum dapat diakses (${err.message || 'kesalahan jaringan'}).`, 'text-emerald-400');
-            }
-        }
-
         function setCallsignLookupStatus(message, color = 'text-slate-400') {
             const statusEl = document.getElementById('checkStatus');
             if (statusEl) {
@@ -2868,8 +2862,37 @@ module.exports = QRCode;
             }
         }
 
+        async function lookupNcsCallbook() {
+            const input = document.getElementById('ncsInput');
+            const status = document.getElementById('ncsLookupStatus');
+            const cs = (input?.value || '').trim().toUpperCase();
+            if (!cs) { syncInputToCard(); if (status) status.textContent = 'Callsign NCS kosong.'; return; }
+            input.value = cs;
+            const local = normalizeCallsignRecord(cs, getCombinedDatabase()[cs]);
+            if (local?.name) {
+                if (status) status.textContent = `✓ ${cs}: ${local.name} (database lokal)`;
+                syncInputToCard(); return;
+            }
+            if (status) status.textContent = `Mencari nama ${cs} di Callbook RAPI Wilayah 16...`;
+            try {
+                let found = await lookupRegionalCallbook(cs);
+                let source = 'RAPI Wilayah 16';
+                if (!found) { if (status) status.textContent = `Tidak ditemukan di Wilayah 16. Mencari di RAPI Nasional...`; found = await lookupNationalCallbook(cs); source = 'RAPI Nasional'; }
+                if (found?.name) {
+                    customDatabase[cs] = mergeCallsignRecord(customDatabase[cs], found);
+                    persistCustomDatabase(false);
+                    if (status) status.textContent = `✓ ${cs}: ${found.name} (${source}; disimpan)`;
+                } else if (status) status.textContent = `Nama ${cs} tidak ditemukan. Callsign tetap digunakan.`;
+            } catch (err) {
+                console.warn('Lookup NCS gagal:', err);
+                if (status) status.textContent = `Callbook belum dapat diakses. Callsign ${cs} tetap digunakan.`;
+            }
+            syncInputToCard();
+        }
+
         async function checkCallsignDatabase() {
             const cs = document.getElementById('targetCallsign').value.trim().toUpperCase();
+            const statusEl = document.getElementById('checkStatus');
             const nameInput = document.getElementById('targetName');
             const addrInput = document.getElementById('targetAddress');
             const checkButton = document.querySelector('button[onclick="checkCallsignDatabase()"]');
@@ -2879,7 +2902,7 @@ module.exports = QRCode;
             if (local) {
                 nameInput.value = local.name;
                 addrInput.value = local.address;
-                await supplementFromPostel(cs, `✅ ${cs} ditemukan di database lokal.`);
+                setCallsignLookupStatus(`✅ ${cs} ditemukan di database lokal.` , 'text-emerald-400');
                 syncInputToCard();
                 return;
             }
@@ -2887,21 +2910,17 @@ module.exports = QRCode;
             nameInput.value = '';
             addrInput.value = '';
             if (checkButton) { checkButton.disabled = true; checkButton.dataset.originalText = checkButton.textContent; checkButton.textContent = '⏳'; }
+            setCallsignLookupStatus(`Database lokal tidak menemukan ${cs}. Mencari di Callbook RAPI Wilayah 16...`, 'text-amber-300');
             let regionalError = null;
             try {
-                setCallsignLookupStatus(`Mencari ${cs} di Callbook RAPI Wilayah 16...`, 'text-amber-300');
                 const regional = await lookupRegionalCallbook(cs);
                 if (regional) {
                     customDatabase[cs] = { name: regional.name, address: regional.address };
                     const saved = persistCustomDatabase(false);
                     nameInput.value = regional.name;
                     addrInput.value = regional.address;
-                    const message = saved
-                        ? `✅ ${cs} ditemukan di RAPI Wilayah 16 dan disimpan ke database lokal.`
-                        : `✅ ${cs} ditemukan di RAPI Wilayah 16. Data terisi, tetapi penyimpanan lokal gagal.`;
-                    await supplementFromPostel(cs, message);
+                    setCallsignLookupStatus(saved ? `✅ ${cs} ditemukan di RAPI Wilayah 16 dan disimpan ke database lokal.` : `✅ ${cs} ditemukan di RAPI Wilayah 16. Data terisi, tetapi penyimpanan lokal gagal.`, 'text-emerald-400');
                     syncInputToCard();
-                    if (checkButton) { checkButton.disabled = false; checkButton.textContent = checkButton.dataset.originalText || '🔍 Cek'; }
                     return;
                 }
             } catch (err) {
@@ -2909,45 +2928,27 @@ module.exports = QRCode;
                 console.warn('Pencarian Callbook Wilayah gagal:', err);
             }
 
-            let nationalMessage = '';
+            setCallsignLookupStatus(`Tidak ditemukan di Wilayah 16. Mencari di Callbook RAPI Nasional...`, 'text-amber-300');
             try {
-                setCallsignLookupStatus(`Tidak ditemukan di Wilayah 16. Mencari di Callbook RAPI Nasional...`, 'text-amber-300');
                 const national = await lookupNationalCallbook(cs);
                 if (national) {
                     customDatabase[cs] = { name: national.name, address: national.address };
                     const saved = persistCustomDatabase(false);
                     nameInput.value = national.name;
                     addrInput.value = national.address;
-                    nationalMessage = saved
-                        ? `✅ ${cs} ditemukan di RAPI Nasional dan disimpan ke database lokal.`
-                        : `✅ ${cs} ditemukan di RAPI Nasional. Data terisi, tetapi penyimpanan lokal gagal.`;
-                    await supplementFromPostel(cs, nationalMessage);
-                    if (checkButton) { checkButton.disabled = false; checkButton.textContent = checkButton.dataset.originalText || '🔍 Cek'; }
-                    return;
-                }
-            } catch (err) {
-                console.warn('Pencarian Callbook Nasional gagal:', err);
-                nationalMessage = `Callbook Nasional belum dapat diakses (${err.message || 'kesalahan jaringan'}).`;
-            }
-
-            setCallsignLookupStatus(`${nationalMessage || `Tidak ditemukan di database lokal, Wilayah 16, maupun RAPI Nasional.`} Mencari di Postel IAR/IKRAP...`, 'text-amber-300');
-            try {
-                const postel = await lookupPostelCallbook(cs);
-                if (postel) {
-                    nameInput.value = postel.name || '';
-                    addrInput.value = postel.address || '';
-                    customDatabase[cs] = { name: nameInput.value, address: addrInput.value };
-                    persistCustomDatabase(false);
-                    const permit = postelSummary(postel);
-                    setCallsignLookupStatus(`✅ ${cs} ditemukan di Postel. ${permit || 'Data izin ditemukan.'}`, 'text-emerald-400');
+                    setCallsignLookupStatus(saved ? `✅ ${cs} ditemukan di RAPI Nasional dan disimpan ke database lokal.` : `✅ ${cs} ditemukan di RAPI Nasional. Data terisi, tetapi penyimpanan lokal gagal.`, 'text-emerald-400');
                 } else {
-                    setCallsignLookupStatus(`⚠️ ${cs} tidak ditemukan di database lokal, RAPI Wilayah 16, RAPI Nasional, maupun Postel. Silakan isi manual.`, 'text-amber-400');
+                    setCallsignLookupStatus(`⚠️ ${cs} tidak ditemukan di database lokal, RAPI Wilayah 16, maupun RAPI Nasional. Silakan isi manual.`, 'text-amber-400');
                     nameInput.focus();
                 }
             } catch (err) {
-                console.warn('Pencarian Postel gagal:', err);
-                const detail = nationalMessage || 'Data tidak ditemukan di sumber RAPI.';
-                setCallsignLookupStatus(`${detail} Pencarian Postel gagal: ${err.message || 'kesalahan jaringan'}.`, 'text-amber-400');
+                console.warn('Pencarian Callbook Nasional gagal:', err);
+                const likelyCors = /failed to fetch|networkerror|load failed/i.test(String(err));
+                const detail = likelyCors
+                    ? 'Akses otomatis diblokir browser (kemungkinan CORS/kebijakan sesi).'
+                    : `Akses Callbook Nasional gagal: ${err.message || 'kesalahan jaringan'}.`;
+                setCallsignLookupStatus(`${detail} Data belum dapat diverifikasi; silakan isi manual atau buka situs Callbook secara langsung.`, 'text-amber-400');
+                if (regionalError) console.warn('Kedua sumber eksternal gagal diakses.', regionalError);
                 nameInput.focus();
             } finally {
                 if (checkButton) { checkButton.disabled = false; checkButton.textContent = checkButton.dataset.originalText || '🔍 Cek'; }
@@ -3025,8 +3026,8 @@ module.exports = QRCode;
         }
 
         function clearAllLocalStorage() {
-            if (confirm("Hapus seluruh penyimpanan lokal (Log & Database)?")) {
-                localStorage.removeItem('rapiQsoLogs'); localStorage.removeItem('rapiCustomDB'); localStorage.removeItem('qslCardActiveState'); localStorage.removeItem('rapiQueueList');
+            if (confirm("Hapus log QSO, pengaturan kartu, dan antrian di perangkat? Database Callbook anggota tidak akan dihapus.")) {
+                localStorage.removeItem('rapiQsoLogs'); localStorage.removeItem('qslCardActiveState'); localStorage.removeItem('rapiQueueList');
                 alert("Data berhasil dibersihkan!"); location.reload();
             }
         }
@@ -3124,6 +3125,38 @@ module.exports = QRCode;
             saveCurrentState();
         }
 
+        function updateDeveloperDatabaseTable() {
+            const body = document.getElementById('developerDbTableBody');
+            const count = document.getElementById('developerDbCount');
+            if (!body) return;
+            const rows = Object.keys(customDatabase).sort().map(cs => ({ callsign: cs, ...normalizeCallsignRecord(cs, customDatabase[cs]) })).filter(x => x.name || x.address);
+            if (count) count.textContent = `${rows.length} data anggota tersimpan pada database callbook`;
+            if (!rows.length) { body.innerHTML = '<tr><td colspan="4" class="p-3 text-center text-slate-500">Database belum memiliki data tambahan.</td></tr>'; return; }
+            body.innerHTML = rows.map(rec => `<tr class="border-b border-slate-800"><td class="p-2 font-mono text-cyan-300">${escapeHTML(rec.callsign)}</td><td class="p-2">${escapeHTML(rec.name)}</td><td class="p-2">${escapeHTML(rec.address)}</td><td class="p-2"><button onclick="deleteDeveloperCallbookRecord('${escapeHTML(rec.callsign)}')" class="bg-rose-700 text-white px-2 py-1 rounded text-[10px]">Hapus</button></td></tr>`).join('');
+        }
+        async function deleteDeveloperCallbookRecord(cs) {
+            if (!confirm(`Hapus data ${cs} dari database callbook?`)) return;
+            const previous = customDatabase[cs]; delete customDatabase[cs];
+            try {
+                localStorage.setItem('rapiCustomDB', JSON.stringify(customDatabase));
+                await fetch('/api/callbook-db', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ database: customDatabase, replace: true }) }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); });
+                updateCustomDatabaseCount(); updateDeveloperDatabaseTable(); alert(`Data ${cs} dihapus dari database.`);
+            } catch (err) { if (previous) customDatabase[cs] = previous; try { localStorage.setItem('rapiCustomDB', JSON.stringify(customDatabase)); } catch (e) {} alert('Penghapusan gagal disinkronkan ke server.'); }
+        }
+        async function clearDeveloperCallbookDatabase() {
+            if (!confirm('Hapus seluruh database callbook tambahan? Log QSO dan log operator tidak akan terhapus.')) return;
+            const previous = customDatabase; customDatabase = {};
+            try {
+                localStorage.setItem('rapiCustomDB', '{}');
+                await fetch('/api/callbook-db', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ database: {}, replace: true }) }).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); }); updateCustomDatabaseCount(); updateDeveloperDatabaseTable();
+                alert('Database callbook tambahan berhasil dikosongkan.');
+            } catch (err) { customDatabase = previous; persistCustomDatabase(false); alert('Database gagal dihapus dari server.'); }
+        }
+        function loadDeveloperDatabase(event) {
+            loadCustomDatabase(event);
+            setTimeout(updateDeveloperDatabaseTable, 700);
+        }
+
         function loadCustomDatabase(event) {
             const file = event.target.files?.[0];
             if (!file) return;
@@ -3175,7 +3208,7 @@ module.exports = QRCode;
                     customDatabase = original;
                     console.error(err);
                     alert('Database gagal diimpor: ' + (err.message || 'format file tidak valid.'));
-                } finally { event.target.value = ''; updateCustomDatabaseCount(); }
+                } finally { event.target.value = ''; updateCustomDatabaseCount(); updateDeveloperDatabaseTable(); }
             };
             reader.readAsText(file);
         }
@@ -3241,7 +3274,7 @@ module.exports = QRCode;
                 freq: String(item.freq || item.FREQ || item.frequency || '143.040').trim(), mode: String(item.mode || item.submode || item.SUBMODE || item.MODE || 'FM').trim().toUpperCase(),
                 name: String(item.name || item.NAME || '-').trim().toUpperCase(), address: String(item.address || item.QTH || item.qth || '-').trim(),
                 rst: String(item.rst || item.RST_SENT || item.rst_sent || '59').trim(), rstReceived: String(item.rstReceived || item.RST_RCVD || item.rst_rcvd || '').trim(),
-                ncs: String(item.ncs || '').trim().toUpperCase(), event: String(item.event || item.COMMENT || item.comment || 'Import').trim(),
+                ncs: String(item.ncs || '').trim().toUpperCase(), ncsName: String(item.ncsName || '').trim().toUpperCase(), event: String(item.event || item.COMMENT || item.comment || 'Import').trim(),
                 qslStatus: String(item.qslStatus || item.qsl_status || (String(item.QSL_RCVD || '').toUpperCase() === 'Y' ? 'Diterima / terkonfirmasi' : (String(item.QSL_SENT || '').toUpperCase() === 'Y' ? 'Sudah dikirim' : 'Belum dibuat')))
             };
         }
@@ -3633,7 +3666,9 @@ NCS: ${ncs} | Event: ${eventName}`);
             const duplicate = qsoLogs.find(log => String(log.callsign || '').toUpperCase() === callsign && String(log.date || '') === dateVal && String(log.time || '') === timeVal && String(log.freq || '') === freq);
             if (duplicate && !confirm(`Kemungkinan QSO duplikat ditemukan: ${callsign}, ${dateVal} ${timeVal}, ${freq} MHz. Tetap simpan?`)) return;
 
-            const entry = { date: dateVal, time: timeVal, callsign, freq, mode: document.getElementById('modeInput')?.value || 'FM', name, address, rst, rstReceived: document.getElementById('rstReceivedInput')?.value.trim() || '', ncs, event: eventName, qslStatus: 'Belum dibuat' };
+            if (!normalizeCallsignRecord(ncs, getCombinedDatabase()[ncs])?.name) await lookupNcsCallbook();
+            const ncsName = normalizeCallsignRecord(ncs, getCombinedDatabase()[ncs])?.name || '';
+            const entry = { date: dateVal, time: timeVal, callsign, freq, mode: document.getElementById('modeInput')?.value || 'FM', name, address, rst, rstReceived: document.getElementById('rstReceivedInput')?.value.trim() || '', ncs, ncsName, event: eventName, qslStatus: 'Belum dibuat' };
             qsoLogs.push(entry);
             try { localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs)); } catch (err) { qsoLogs.pop(); alert('Penyimpanan lokal penuh/tidak tersedia. Data belum disimpan. Ekspor/backup data terlebih dahulu.'); return; }
             // Data manual yang belum ada di database otomatis ditambahkan saat QSO berhasil disimpan.
