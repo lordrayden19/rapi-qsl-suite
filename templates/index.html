@@ -611,6 +611,7 @@
                         <select id="eventTargetSelect" onchange="onEventTargetChange()" class="bg-slate-900 border border-slate-700 rounded px-2 py-2 text-xs text-white min-w-48"><option value="">Tanpa event / Arsip umum</option></select>
                         <button onclick="setSelectedEventActive()" class="bg-sky-700 hover:bg-sky-600 text-white text-xs px-3 py-2 rounded-lg">Jadikan Aktif</button>
                         <button onclick="toggleSelectedEventStatus()" class="bg-amber-700 hover:bg-amber-600 text-white text-xs px-3 py-2 rounded-lg">Tutup / Buka Event</button>
+                        <button onclick="deleteSelectedEvent()" class="bg-rose-700 hover:bg-rose-600 text-white text-xs px-3 py-2 rounded-lg" title="Hapus event terpilih; QSO tetap dipertahankan sebagai arsip umum">🗑️ Hapus Event</button>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
                         <select id="eventArchiveFilter" onchange="updateLogTable(); updateEventArchiveSummary();" class="bg-slate-900 border border-slate-700 rounded px-2 py-2 text-xs text-white"><option value="all">Semua event dan arsip umum</option><option value="unassigned">Arsip umum / belum dikategorikan</option></select>
@@ -2250,6 +2251,67 @@ module.exports = QRCode;
             event.status = event.status === 'closed' ? 'open' : 'closed';
             if (event.status === 'closed' && activeQsoEventId === event.id) activeQsoEventId = '';
             persistQsoEvents(); updateEventSelectors(); renderEventArchiveList();
+        }
+        function deleteSelectedEvent() {
+            const id = selectedEventId();
+            const event = getEventById(id);
+            if (!event) { alert('Pilih event yang ingin dihapus terlebih dahulu.'); return; }
+
+            const linkedLogs = getEventLogs(id);
+            const eventName = event.name || 'Event tanpa nama';
+            const message = linkedLogs.length
+                ? `Hapus event "${eventName}"?\\n\\n${linkedLogs.length} log QSO yang terkait TIDAK akan dihapus. Log tersebut akan dipertahankan dan dipindahkan ke Arsip Umum (tanpa event).\\n\\nTindakan ini tidak dapat dibatalkan kecuali Anda memiliki backup.`
+                : `Hapus event "${eventName}"?\\n\\nEvent ini tidak memiliki log QSO terkait. Tindakan ini tidak dapat dibatalkan kecuali Anda memiliki backup.`;
+            if (!confirm(message)) return;
+
+            const previousEvents = qsoEvents.slice();
+            const previousLogs = qsoLogs.map(log => ({...log}));
+            const previousActiveId = activeQsoEventId;
+            try {
+                // Jangan menghapus QSO: lepaskan relasi event dan pindahkan ke Arsip Umum.
+                qsoLogs.forEach(log => {
+                    if (log.eventId === id) {
+                        delete log.eventId;
+                        log.event = '';
+                    }
+                });
+                qsoEvents = qsoEvents.filter(item => item.id !== id);
+                if (activeQsoEventId === id) activeQsoEventId = '';
+
+                persistQsoEvents();
+                localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
+                devQsoLogs = [...qsoLogs];
+                saveServerLogs();
+
+                const target = document.getElementById('eventTargetSelect');
+                const filter = document.getElementById('eventArchiveFilter');
+                if (target) target.value = '';
+                if (filter) filter.value = 'all';
+                document.getElementById('eventNotes').value = '';
+                document.getElementById('newEventName').value = '';
+                document.getElementById('newEventDate').value = '';
+                document.getElementById('newEventFreq').value = '';
+                document.getElementById('newEventNcs').value = '';
+
+                updateEventSelectors();
+                renderEventArchiveList();
+                updateLogTable();
+                updateStatistics();
+                updateEventArchiveSummary();
+                alert(`Event "${eventName}" berhasil dihapus. ${linkedLogs.length} log QSO tetap dipertahankan di Arsip Umum.`);
+            } catch (err) {
+                qsoEvents = previousEvents;
+                qsoLogs = previousLogs;
+                activeQsoEventId = previousActiveId;
+                try {
+                    persistQsoEvents();
+                    localStorage.setItem('rapiQsoLogs', JSON.stringify(qsoLogs));
+                } catch (restoreErr) { console.error('Gagal memulihkan data setelah penghapusan event:', restoreErr); }
+                updateEventSelectors();
+                renderEventArchiveList();
+                updateLogTable();
+                alert('Penghapusan event gagal disimpan. Data lokal dipulihkan: ' + (err?.message || err));
+            }
         }
         function saveSelectedEventNotes() {
             const event = getEventById(selectedEventId()); if (!event) { alert('Pilih event terlebih dahulu.'); return; }
