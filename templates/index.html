@@ -635,7 +635,8 @@
                 <div class="flex flex-wrap items-center gap-3 text-xs">
                     <label class="flex items-center gap-2 text-slate-300"><input id="selectAllVisibleQso" type="checkbox" onchange="toggleSelectVisibleQso(this.checked)" class="accent-amber-500"> Pilih semua hasil filter</label>
                     <span id="selectedQsoCount" class="text-amber-300">0 QSO dipilih</span>
-                    <button onclick="clearSelectedQso()" class="bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded">Hapus pilihan</button>
+                    <button id="deleteSelectedQsoBtn" onclick="deleteSelectedQso()" disabled class="bg-rose-700 hover:bg-rose-600 disabled:opacity-40 disabled:cursor-not-allowed text-white px-3 py-1.5 rounded font-semibold">🗑️ Hapus QSO Terpilih</button>
+                    <button onclick="clearSelectedQso()" class="bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded">Batal Pilihan</button>
                 </div>
                 <p id="logCountInfo" class="text-[11px] text-slate-400" aria-live="polite">Menampilkan semua log.</p>
 
@@ -3874,10 +3875,43 @@ NCS: ${ncs} | Event: ${eventName}`);
         }
 
         function updateSelectedCount() {
+            // Buang indeks yang sudah tidak valid agar pilihan tidak menunjuk ke log yang salah.
+            selectedQsoIndices = new Set(Array.from(selectedQsoIndices).filter(i => Number.isInteger(i) && i >= 0 && i < qsoLogs.length));
             const el = document.getElementById('selectedQsoCount');
             if (el) el.textContent = `${selectedQsoIndices.size} QSO dipilih`;
+            const deleteBtn = document.getElementById('deleteSelectedQsoBtn');
+            if (deleteBtn) deleteBtn.disabled = selectedQsoIndices.size === 0;
         }
         function toggleQsoSelection(index, checked) { if (checked) selectedQsoIndices.add(index); else selectedQsoIndices.delete(index); updateSelectedCount(); }
+
+        async function deleteSelectedQso() {
+            const indices = Array.from(selectedQsoIndices)
+                .filter(i => Number.isInteger(i) && i >= 0 && i < qsoLogs.length)
+                .sort((a, b) => b - a);
+            if (!indices.length) { alert('Belum ada log QSO yang dipilih. Centang log yang akan dihapus terlebih dahulu.'); return; }
+            const count = indices.length;
+            if (!confirm(`Anda akan menghapus ${count} log QSO terpilih.\n\nData yang dihapus tidak dapat dikembalikan kecuali Anda memiliki backup. Lanjutkan?`)) return;
+
+            const removeSet = new Set(indices);
+            const nextLogs = qsoLogs.filter((_, index) => !removeSet.has(index));
+            try {
+                // Simpan dahulu agar jika penyimpanan gagal, data di memori tetap utuh.
+                localStorage.setItem('rapiQsoLogs', JSON.stringify(nextLogs));
+            } catch (err) {
+                alert('Penghapusan dibatalkan. Gagal menyimpan perubahan ke penyimpanan lokal.');
+                return;
+            }
+
+            qsoLogs = nextLogs;
+            selectedQsoIndices.clear();
+            devQsoLogs = [...qsoLogs];
+            await saveServerLogs();
+            updateLogTable();
+            updateStatistics();
+            updateEventSelectors();
+            renderEventArchiveList();
+            alert(`${count} log QSO terpilih berhasil dihapus.`);
+        }
         function toggleSelectVisibleQso(checked) {
             document.querySelectorAll('#logTableBody input.qso-select').forEach(input => {
                 const index = Number(input.dataset.index); input.checked = checked; toggleQsoSelection(index, checked);
